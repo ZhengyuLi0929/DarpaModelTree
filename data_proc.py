@@ -122,7 +122,7 @@ def generate_training_data(platform, section, K=10):
 	df_gdelt = df_gdelt.sort_index()
 
 	# Find the popular event ID we use as the input
-	active_event = df_gdelt[df_gdelt.sum(axis=1).gt(8500)].index.values
+	active_event = df_gdelt[df_gdelt.sum(axis=1).gt(7000)].index.values
 
 	# active_gdelt = list(active_gdelt)
 	df_gdelt = df_gdelt.loc[active_event,:]
@@ -130,8 +130,8 @@ def generate_training_data(platform, section, K=10):
 	#df_corr[df_corr.lt(0.3)] = 0
     
 	# k+1,K+2,...,k+n
-	k=-2
-	n=5
+	k=0
+	n=1
 	#path = './train/'+platform+'/'+str(n)
 	if not os.path.exists(path):
 		os.mkdir(path)
@@ -153,20 +153,20 @@ def generate_training_data(platform, section, K=10):
 		for j in range(n):
 			W.append(w)
 		id = infoID.replace('/','#')
-		f_train = open(os.path.join(path, id+'_bert_5day_8500_train.csv'), 'w')
-		for i in range(2,25):
+		f_train = open(os.path.join(path, id+'_bert_1day_7000_train.csv'), 'w')
+		for i in range(0,25):
 			I = arr_gdelt[:,i+k:i+k+n].T
 			x = I*np.array(W)
 			x = x.flatten()
 			y = arr_event[i]
-			if i == 2:
+			if i == 0:
 				f_train.write(','.join("x"+str(cn) for cn in range(len(x))))
 				f_train.write(",y\n")
 			f_train.write(','.join(str(e) for e in x))
 			f_train.write(','+str(y)+'\n')
 		f_train.close()
 
-		f_test = open(os.path.join(path, id+'_bert_5day_8500_test.csv'), 'w')
+		f_test = open(os.path.join(path, id+'_bert_1day_7000_test.csv'), 'w')
 		for i in range(25,39):
 			I = arr_gdelt[:,i+k:i+k+n].T
 			x = I*np.array(W)
@@ -196,5 +196,6 @@ if __name__ == '__main__':
 		json_to_csv(plf)
 		for s in sec:
 			generate_training_data(plf,s)
+            
 	#generate_training_data('twitter')
 	#narr_cluster('twitter')

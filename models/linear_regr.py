@@ -11,7 +11,7 @@ class linear_regr:
 
     def __init__(self):
         from sklearn.linear_model import LinearRegression
-        self.model = LinearRegression(fit_intercept = False)
+        self.model = LinearRegression(fit_intercept = False, normalize = True)
 
     def fit(self, X, y):
         self.model.fit(X, y)
