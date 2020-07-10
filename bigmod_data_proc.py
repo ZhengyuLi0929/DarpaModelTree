@@ -114,7 +114,7 @@ def dataloader(gdelt_cut, corr_cut, option):
     for event in gdelt:
         if gdelt[event].sum() > gdelt_cut:
             filted_gdelt.append(event)
-    #print(len(filted_gdelt))
+    print(len(filted_gdelt))
     for item in narrative:
         for i in range(split):
             if option == 'EventCount':
@@ -186,13 +186,27 @@ def decay(gdelt, decay_factor):
             if i == 0:
                 continue
             gdelt[event][date[i]] = decay_factor * gdelt[event][date[i-1]] + Y[event][date[i]] - Y[event][date[i-1]]
+    return gdelt
+
+
+def dec(X, decay, last_x = None, last_y = None, fac = False):
+    Y = copy.deepcopy()
+    res = []
+    for i in range(len(X)):
+        if i == 0:
+            if fac:
+                res[i] = decay * last_y + Y[i] - last_x
+            else:
+                continue
+        res[i] = decay * res[i-1] + Y[i] - Y[i-1]
+    return res
 
 def postprocess(pred):
     pred = np.array([int(item) for item in pred])
     pred[np.where(pred < 0)] = 0
     return pred
 #nonlinear(gdelt)
-decay(gdelt, 0.90)
+gdelt = decay(gdelt, 0.85)
 '''
 for option in ['EventCount', 'UserCount', 'NewUserCount']:
     X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(7000,0, option)
@@ -222,12 +236,12 @@ for item in narrative:
     result[item] = {'EventCount':[], 'UserCount':[], 'NewUserCount':[]}
     depth1[item] = {'EventCount':[], 'UserCount':[], 'NewUserCount':[]}
     output[item] = {'EventCount':{}, 'UserCount':{}, 'NewUserCount':{}}
-#d = 0
-for d in range(6):
-#if d == 0:
+d = 1
+#for d in range(6):
+if d == 1:
     print("depth:", d)
     for option in ['EventCount', 'UserCount', 'NewUserCount']:
-        X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(7000,0, option)
+        X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(500,0, option)
         #print(len(X_train), len(X_test), len(Y_train), len(Y_test))
         '''
         regression = LinearRegression(fit_intercept=False,normalize=True)
@@ -235,33 +249,38 @@ for d in range(6):
         Y_pred = regression.predict(X_test)
         Y_pred = postprocess(Y_pred)
         '''
-        model_tree_1 = ModelTree(model, max_depth=d, min_samples_leaf=10, search_type="greedy", n_search_grid=10)
+        #last_x = X_train[]
+        #X_train = decay(X_train, 0.85)
+        model_tree_1 = ModelTree(model, max_depth=0, min_samples_leaf=10, search_type="greedy", n_search_grid=10)
         model_tree_1.fit(np.array(X_train), np.array(Y_train))
+        #decay(X_test, 0,85)
         Y_pred = model_tree_1.predict(np.array(X_test))
         Y_pred = postprocess(Y_pred)
         
-    
-        X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(7000, 0, option)
+        
+        X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(0, 0, option)
 
         for index in range(len(narrative)):
-            regression = LinearRegression(fit_intercept=False,normalize=True)
-            regression.fit(X_train[split * index: split * (index + 1)], Y_train[split * index: split * (index + 1)])
-            pred = postprocess(regression.predict(X_test[14 * index: 14 * (index + 1)]))
-            ratio = sum(pred) / (sum(Y_pred[14 * index: 14 * (index + 1)]) + 0.1)
+            #regression = LinearRegression(fit_intercept=False,normalize=True)
+            #decay(X_train, 0.85)
+            #regression.fit(X_train[split * index: split * (index + 1)], Y_train[split * index: split * (index + 1)])
+            #decay(X_test, 0,85)
+            #pred = postprocess(regression.predict(X_test[14 * index: 14 * (index + 1)]))
+            #ratio = sum(pred) / (sum(Y_pred[14 * index: 14 * (index + 1)]) + 0.1)
             #ratio = 1
             #rmse_, ape_ = evaluation(Y_test[14 * index: 14 * (index + 1)],  ratio * np.array(Y_pred[14 * index: 14 * (index + 1)]))
             #rmse_, ape_ = evaluation(Y_test[14 * index: 14 * (index + 1)], pred)
             #rmse += rmse_
             #ape += ape_
-            result[narrative[index]][option] = postprocess(ratio * np.array(Y_pred[14 * index: 14 * (index + 1)]))
+            #result[narrative[index]][option] = postprocess(ratio * np.array(Y_pred[14 * index: 14 * (index + 1)]))
             #result[narrative[index]][option] = pred
-            '''
+            
             treemod = ModelTree(model, max_depth=1, min_samples_leaf=5, search_type="greedy", n_search_grid=10)
             treemod.fit(np.array(X_train[split * index: split * (index + 1)]), np.array(Y_train[split * index: split * (index + 1)]))
             pred1 = postprocess(treemod.predict(np.array(X_test[14 * index: 14 * (index + 1)])))
             ratio1 = sum(pred1) / (sum(Y_pred[14 * index: 14 * (index + 1)]) + 0.1)
-            depth1[narrative[index]][option] = postprocess(ratio1 * np.array(Y_pred[14 * index: 14 * (index + 1)]))
-            '''
+            result[narrative[index]][option] = postprocess(ratio1 * np.array(Y_pred[14 * index: 14 * (index + 1)]))
+            
         #print("RMSE: %f, APE: %f" %(rmse/len(narrative), ape/len(narrative)))
     
         rmse, ape, size = 0, 0, 0
@@ -278,9 +297,9 @@ for d in range(6):
                 #draw_m2(index, result[narrative[index]][option])
                 # write file
                 
-                sdate = 1547856000000
+                sdate = 1547769600000
                 for i in range(len(this)):
-                    output[narrative[index]][str(sdate + i * 86400000)] = int(this[i])
+                    output[narrative[index]][option][str(sdate + i * 86400000)] = int(this[i])
                 
                 '''
                 rmse_, ape_ = evaluation(Y_test[14 * index: 14 * (index + 1)], depth1[narrative[index]][option])
@@ -291,12 +310,12 @@ for d in range(6):
             
         print("RMSE: %f, APE: %f, Size: %f" %(rmse/len(selected_na), ape/len(selected_na), size))
         #print("RMSE for depth 1: %f, APE for depth 1: %f, Size for depth 1: %f" %(rmse1/len(selected_na), ape1/len(selected_na), size1))
-'''
+final = {}
 for na in selected_na:
-    output[na] = pd.DataFrame(output[na]).to_json()
-with open('youtube_bert_mixed.json', 'w') as outfile:
-    json.dump(output, outfile)
-'''
+    final[na] = pd.DataFrame(output[na]).to_json()
+with open('twitter_bert_mixed_decay_1.json', 'w') as outfile:
+    json.dump(final, outfile)
+
 '''
 for item in narrative:
     for i in range(len(result[item]['UserCount'])):

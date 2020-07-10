@@ -58,7 +58,7 @@ def main():
             #plot_model_tree_fit(mean_regr(), X, y, name, mapes, rmses, target)
             from models.linear_regr import linear_regr
             data = plot_model_tree_fit(linear_regr(), X, y, name, target)
-            sdate = 1547856000000
+            sdate = 1547769600000
             if target == "twitter_event":
                 tt[key]["EventCount"] = {}
                 for i in range(len(data)):

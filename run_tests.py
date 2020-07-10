@@ -5,6 +5,7 @@
  Runs 3 tests to make sure our model tree works as expected.
 
 """
+import copy
 import os, csv
 import numpy as np
 import matplotlib.pyplot as plt
@@ -31,11 +32,18 @@ def sepmod():
         sizes = np.zeros(4)
         all_mape = 0
         all_rmse = 0
+        decay = 0.85
         for key in nodelist:
             name = key.replace('/','#')
             fname = name + "_bert_1day_0_train.csv"
             data_csv_data_filename = os.path.join(target,fname)
             X, y, header = load_csv_data(data_csv_data_filename, mode="regr", verbose=False)
+            # decay
+            Y = copy.deepcopy(X)
+            for i in range(len(X)):
+                if i == 0:
+                    continue
+                X[i] = X[i] - X[i-1] + decay *
             # Train different depth model tree fits and plot results
             #from models.mean_regr import mean_regr
             #plot_model_tree_fit(mean_regr(), X, y, name, mapes, rmses, target)
@@ -82,8 +90,11 @@ def postprocess(pred):
 #
 # ********************************
 def plot_model_tree_fit(model, X, y, name, mapes, rmses, sizes, target):
+        '''
+        # plot graph
         output_filename = os.path.join("output_"+target, "bert_1day_0_linear_{}_greedy_leaf_5_{}_fit.png".format(model.__class__.__name__, name))
         #print("Saving model tree predictions plot y vs x to '{}'...".format(output_filename))
+        '''
 
         plt.figure(figsize=(20, 10))
         figure_str = "23"
@@ -126,10 +137,12 @@ def plot_model_tree_fit(model, X, y, name, mapes, rmses, sizes, target):
             '''
             mapes[depth] += ape
             rmses[depth] += rmse
+            '''
             # Plot predictions
             plt.subplot(int(figure_str + str(depth + 1)))
             plt.plot( np.concatenate((y, y_test),axis = None), markersize=5, color='k')
             plt.plot( np.concatenate((y_train_pred, y_pred), axis = None), markersize=5, color='r')
+            
             #print(y_pred)
             #print(y_test)
             #plt.plot(y, markersize=5, color='k')
@@ -140,11 +153,12 @@ def plot_model_tree_fit(model, X, y, name, mapes, rmses, sizes, target):
             plt.xlabel("# days", fontsize=15)
             plt.ylabel("y", fontsize=15)
             plt.grid()
-
+            '''
+        '''
         plt.suptitle('Model tree (model = {}) fits for different depths'.format(model.__class__.__name__), fontsize=25)
         plt.savefig(output_filename, bbox_inches='tight')
         plt.close()
-
+        '''
 def generate_csv_data(func, output_csv_filename, x_range=(0, 1), N=500):
     x_vec = np.linspace(x_range[0], x_range[1], N)
     y_vec = np.vectorize(func)(x_vec)
