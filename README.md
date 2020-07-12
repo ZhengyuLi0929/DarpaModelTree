@@ -1,4 +1,4 @@
-# DarpaModelTree
+# 1: Seperate Tree Model
 
 ## preprocessing:
 1. Current data preprocessing is in data_proc.py. This deals with the correlation map and gdelt time series.
@@ -14,3 +14,17 @@
 1. twitter_event, twitter_user, twitter_newuser and their respective youtube folders contain different forms of processed input data
 
 2. ouput_twitter_event contains graphs with regard to each model.
+
+# 2: Mixed Model
+
+## preprocessing, training and outputting all in bigmod_data_proc.py
+Just run bigmod_data_proc.py to get results
+
+# 3: DNN Model
+DNN model is in a seperate directory that just called dnn.
+
+## Preprocessing
+data_proc.py under dnn folder
+
+## Run Model + Output result
+dnn.py under dnn folder
