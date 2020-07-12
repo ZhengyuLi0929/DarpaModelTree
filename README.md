@@ -18,13 +18,19 @@
 # 2: Mixed Model
 
 ## preprocessing, training and outputting all in bigmod_data_proc.py
-Just run bigmod_data_proc.py to get results
+1. Just run bigmod_data_proc.py to get results
+
+2. The mixed model use a big linear regression to train the shape of each narrative, and use tree models (with random forest) to train the scale of each narrative.
 
 # 3: DNN Model
 DNN model is in a seperate directory that just called dnn.
 
 ## Preprocessing
-data_proc.py under dnn folder
+1. data_proc.py under dnn folder
 
 ## Run Model + Output result
-dnn.py under dnn folder
+1. dnn.py under dnn folder
+
+2. contains three different kinds of dnns: one layer, two dense layers, and the other one Dongxin has discussed before. Some models are commented out.
+
+3. In the comment section, there are also codes for scale vectors. All of which is in dnn.py
