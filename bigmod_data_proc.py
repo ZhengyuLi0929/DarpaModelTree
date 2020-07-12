@@ -21,6 +21,8 @@ from sklearn.neural_network import MLPRegressor
 from sklearn.metrics import mean_squared_error as mse
 from sklearn.preprocessing import PolynomialFeatures
 
+from random import randrange, uniform
+
 import seaborn as sns
 
 # load data:
@@ -205,8 +207,9 @@ def postprocess(pred):
     pred = np.array([int(item) for item in pred])
     pred[np.where(pred < 0)] = 0
     return pred
+    
 #nonlinear(gdelt)
-gdelt = decay(gdelt, 0.85)
+gdelt = decay(gdelt, 0.88)
 '''
 for option in ['EventCount', 'UserCount', 'NewUserCount']:
     X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(7000,0, option)
@@ -238,10 +241,12 @@ for item in narrative:
     output[item] = {'EventCount':{}, 'UserCount':{}, 'NewUserCount':{}}
 d = 1
 #for d in range(6):
+
+
 if d == 1:
     print("depth:", d)
     for option in ['EventCount', 'UserCount', 'NewUserCount']:
-        X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(500,0, option)
+        X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader_yt(520,0, option)
         #print(len(X_train), len(X_test), len(Y_train), len(Y_test))
         '''
         regression = LinearRegression(fit_intercept=False,normalize=True)
@@ -258,7 +263,7 @@ if d == 1:
         Y_pred = postprocess(Y_pred)
         
         
-        X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(0, 0, option)
+        X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader_yt(200, 0, option)
 
         for index in range(len(narrative)):
             #regression = LinearRegression(fit_intercept=False,normalize=True)
@@ -274,12 +279,30 @@ if d == 1:
             #ape += ape_
             #result[narrative[index]][option] = postprocess(ratio * np.array(Y_pred[14 * index: 14 * (index + 1)]))
             #result[narrative[index]][option] = pred
-            
-            treemod = ModelTree(model, max_depth=1, min_samples_leaf=5, search_type="greedy", n_search_grid=10)
-            treemod.fit(np.array(X_train[split * index: split * (index + 1)]), np.array(Y_train[split * index: split * (index + 1)]))
-            pred1 = postprocess(treemod.predict(np.array(X_test[14 * index: 14 * (index + 1)])))
-            ratio1 = sum(pred1) / (sum(Y_pred[14 * index: 14 * (index + 1)]) + 0.1)
-            result[narrative[index]][option] = postprocess(ratio1 * np.array(Y_pred[14 * index: 14 * (index + 1)]))
+            X = np.array(X_train[split * index: split * (index + 1)])
+            y = np.array(Y_train[split * index: split * (index + 1)])
+            bag = 15
+            placeholder = []
+            for i in range(bag):
+                X_real = copy.deepcopy(X)
+                Y_real = copy.deepcopy(y)
+                depth = randrange(4)
+                leaf = randrange(4,7)
+                mask_num = randrange(1,4)
+                for j in range(mask_num):
+                    mask = randrange(len(X_real))
+                    X_real = np.delete(X_real, mask, 0)
+                    Y_real = np.delete(Y_real, mask, 0)
+                treemod = ModelTree(model, max_depth=depth, min_samples_leaf=leaf, search_type="greedy", n_search_grid=10)
+                treemod.fit(X_real, Y_real, verbose=False)
+                pred1 = postprocess(treemod.predict(np.array(X_test[14 * index: 14 * (index + 1)])))
+                ratio1 = sum(pred1) / (sum(Y_pred[14 * index: 14 * (index + 1)]) + 0.1)
+                pred = postprocess(ratio1 * np.array(Y_pred[14 * index: 14 * (index + 1)]))
+                placeholder.append(pred)
+            placeholder = np.array(placeholder)
+            final_pred = placeholder.mean(axis = 0)
+
+            result[narrative[index]][option] = final_pred
             
         #print("RMSE: %f, APE: %f" %(rmse/len(narrative), ape/len(narrative)))
     
@@ -310,10 +333,11 @@ if d == 1:
             
         print("RMSE: %f, APE: %f, Size: %f" %(rmse/len(selected_na), ape/len(selected_na), size))
         #print("RMSE for depth 1: %f, APE for depth 1: %f, Size for depth 1: %f" %(rmse1/len(selected_na), ape1/len(selected_na), size1))
+
 final = {}
 for na in selected_na:
     final[na] = pd.DataFrame(output[na]).to_json()
-with open('twitter_bert_mixed_decay_1.json', 'w') as outfile:
+with open('youtube_bert_mixed_decay_randomforest.json', 'w') as outfile:
     json.dump(final, outfile)
 
 '''

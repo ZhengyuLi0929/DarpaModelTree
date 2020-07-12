@@ -1,11 +1,4 @@
-"""
-
- run_tests.py  (author: Anson Wong / git: ankonzoid)
-
- Runs 3 tests to make sure our model tree works as expected.
-
-"""
-import copy
+import json
 import os, csv
 import numpy as np
 import matplotlib.pyplot as plt
@@ -24,7 +17,7 @@ def sepmod():
     "international/respect_sovereignty","maduro/cuba_support","maduro/dictator","maduro/legitimate",
     "maduro/narco","military","military/desertions","other/anti_socialism","other/censorship_outage",
     "other/chavez","other/chavez/anti","protests","violence"]
-    targets = ["twitter_event","twitter_user","twitter_newuser"]#,"youtube_event","youtube_user","youtube_newuser"]
+    targets = ["twitter_event","youtube_event"]#,"twitter_user","twitter_newuser","youtube_user","youtube_newuser"]
     
     for target in targets:
         mapes = np.zeros(4)
@@ -32,18 +25,20 @@ def sepmod():
         sizes = np.zeros(4)
         all_mape = 0
         all_rmse = 0
-        decay = 0.85
+        #decay = 0.85
         for key in nodelist:
             name = key.replace('/','#')
             fname = name + "_bert_1day_0_train.csv"
             data_csv_data_filename = os.path.join(target,fname)
             X, y, header = load_csv_data(data_csv_data_filename, mode="regr", verbose=False)
+            '''
             # decay
             Y = copy.deepcopy(X)
             for i in range(len(X)):
                 if i == 0:
                     continue
                 X[i] = X[i] - X[i-1] + decay *
+            '''
             # Train different depth model tree fits and plot results
             #from models.mean_regr import mean_regr
             #plot_model_tree_fit(mean_regr(), X, y, name, mapes, rmses, target)
@@ -57,6 +52,7 @@ def sepmod():
             #print("rmse:", round(rmses[i], 4))
             print("ape:", mapes[i])
             print("rmse:", rmses[i])
+            print("size:", sizes[i])
             print("==================================")
 
 # ********************************
@@ -95,11 +91,15 @@ def plot_model_tree_fit(model, X, y, name, mapes, rmses, sizes, target):
         output_filename = os.path.join("output_"+target, "bert_1day_0_linear_{}_greedy_leaf_5_{}_fit.png".format(model.__class__.__name__, name))
         #print("Saving model tree predictions plot y vs x to '{}'...".format(output_filename))
         '''
-
+        
+        '''
         plt.figure(figsize=(20, 10))
         figure_str = "23"
-        mape_ls = np.zeros(12)
+        '''
+        #mape_ls = np.zeros(12)
         for depth in range(4):
+        #depth = 1
+        #if depth == 1:
             # Form model tree
             #print(" -> training model tree depth={}...".format(depth))
             model_tree = ModelTree(model, max_depth=depth, min_samples_leaf=5,

@@ -61,14 +61,24 @@ def gdelt_to_csv():
 	# GDELT time series: form json to csv
 	with open('./data_json/gdelt_time_series.json', 'r') as f:
 	    d = json.loads(f.read())
-	dd = {k: pd.read_json(v, typ='series') for k, v in d.items()}
-
-	index = list(dd.keys())
-	column = dd[index[0]].index.values
+	gdelt = {k: pd.read_json(v, typ='series') for k, v in d.items()}
+    
+	# GDELT decay
+	decay_factor = 0.88
+	Y = copy.deepcopy(gdelt)
+	for event in gdelt:
+		date = gdelt[event].index
+		for i in range(len(date)):
+			if i == 0:
+				continue
+			gdelt[event][date[i]] = decay_factor * gdelt[event][date[i-1]] + Y[event][date[i]] - Y[event][date[i-1]]
+    
+	index = list(gdelt.keys())
+	column = gdelt[index[0]].index.values
 
 	arr = []
 	for key in index:
-		arr.append(dd[key].values)
+		arr.append(gdelt[key].values)
 
 	arr = np.array(arr)
 	df = pd.DataFrame(arr, index=index, columns=column)
