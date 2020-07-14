@@ -29,7 +29,7 @@ import seaborn as sns
 with open("darpa_data_raw/cp4_nodelist.txt",'r') as wf:
     selected_na = [line.strip() for line in wf]
     
-split = 25 
+split = 39
 platform = "twitter"
 data_path = "./data_json/"
 text_path = "./data_json/"
@@ -86,13 +86,15 @@ def dataloader_yt(gdelt_cut, corr_cut, option):
                 else:
                     X.append(0)
             X_train.append(np.array(X))
-        for i in range(split, 39):
+        for i in range(split, 53):
+            '''
             if option == 'EventCount':
                 Y_test.append(youtube[item].EventCount.tolist()[i])
             elif option == 'UserCount':
                 Y_test.append(youtube[item].UserCount.tolist()[i])
             else:
                 Y_test.append(youtube[item].NewUserCount.tolist()[i])
+            '''
             X = []
             for event in filted_gdelt:
                 if youtubeGdeltMat[eventCodeMap[event],narrativeMap[item]] > corr_cut:
@@ -133,13 +135,15 @@ def dataloader(gdelt_cut, corr_cut, option):
                 else:
                     X.append(0)
             X_train.append(np.array(X))
-        for i in range(split, 39):
+        for i in range(split, 53):
+            '''
             if option == 'EventCount':
                 Y_test.append(twitter[item].EventCount.tolist()[i])
             elif option == 'UserCount':
                 Y_test.append(twitter[item].UserCount.tolist()[i])
             else:
                 Y_test.append(twitter[item].NewUserCount.tolist()[i])
+            '''
             X = []
             for event in filted_gdelt:
                 if twitterGdeltMat[eventCodeMap[event],narrativeMap[item]] > corr_cut:
@@ -246,7 +250,7 @@ d = 1
 if d == 1:
     print("depth:", d)
     for option in ['EventCount', 'UserCount', 'NewUserCount']:
-        X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader_yt(520,0, option)
+        X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(520,0, option)
         #print(len(X_train), len(X_test), len(Y_train), len(Y_test))
         '''
         regression = LinearRegression(fit_intercept=False,normalize=True)
@@ -263,7 +267,7 @@ if d == 1:
         Y_pred = postprocess(Y_pred)
         
         
-        X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader_yt(200, 0, option)
+        X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(200, 0, option)
 
         for index in range(len(narrative)):
             #regression = LinearRegression(fit_intercept=False,normalize=True)
@@ -283,6 +287,9 @@ if d == 1:
             y = np.array(Y_train[split * index: split * (index + 1)])
             bag = 15
             placeholder = []
+            if bag == 15:
+            # random forest
+                '''
             for i in range(bag):
                 X_real = copy.deepcopy(X)
                 Y_real = copy.deepcopy(y)
@@ -293,6 +300,13 @@ if d == 1:
                     mask = randrange(len(X_real))
                     X_real = np.delete(X_real, mask, 0)
                     Y_real = np.delete(Y_real, mask, 0)
+                '''
+                # single one
+                leaf = 5
+                depth = 0
+                X_real = X
+                Y_real = y
+                # train
                 treemod = ModelTree(model, max_depth=depth, min_samples_leaf=leaf, search_type="greedy", n_search_grid=10)
                 treemod.fit(X_real, Y_real, verbose=False)
                 pred1 = postprocess(treemod.predict(np.array(X_test[14 * index: 14 * (index + 1)])))
@@ -305,22 +319,25 @@ if d == 1:
             result[narrative[index]][option] = final_pred
             
         #print("RMSE: %f, APE: %f" %(rmse/len(narrative), ape/len(narrative)))
-    
+        '''
         rmse, ape, size = 0, 0, 0
         rmse1, ape1, size1 = 0,0,0
+        '''
         for index in range(len(narrative)):
 
             if narrative[index] in selected_na:
                 this = result[narrative[index]][option]
+                '''
                 rmse_, ape_ = evaluation(Y_test[14 * index: 14 * (index + 1)], this)
                 size += sum(this)
                 #rmse_, ape_ = evaluation(Y_test[14 * index: 14 * (index + 1)], pred)
                 rmse += rmse_
                 ape += ape_
+                '''
                 #draw_m2(index, result[narrative[index]][option])
                 # write file
                 
-                sdate = 1547769600000
+                sdate = 1548979200000 # 2-1
                 for i in range(len(this)):
                     output[narrative[index]][option][str(sdate + i * 86400000)] = int(this[i])
                 
@@ -331,13 +348,13 @@ if d == 1:
                 ape1 += ape_
                 '''
             
-        print("RMSE: %f, APE: %f, Size: %f" %(rmse/len(selected_na), ape/len(selected_na), size))
+        #print("RMSE: %f, APE: %f, Size: %f" %(rmse/len(selected_na), ape/len(selected_na), size))
         #print("RMSE for depth 1: %f, APE for depth 1: %f, Size for depth 1: %f" %(rmse1/len(selected_na), ape1/len(selected_na), size1))
 
 final = {}
 for na in selected_na:
     final[na] = pd.DataFrame(output[na]).to_json()
-with open('youtube_bert_mixed_decay_randomforest.json', 'w') as outfile:
+with open('twitter_bert_mixed_decay_randomforest_dryrun.json', 'w') as outfile:
     json.dump(final, outfile)
 
 '''

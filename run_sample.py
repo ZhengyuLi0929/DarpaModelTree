@@ -24,7 +24,7 @@ def main():
         yt[key] = {}
         for target in targets:
             name = key.replace('/','#')
-            fname = name + "_bert_1day_0_train.csv"
+            fname = name + "_bert_1day_500_decay_dryrun_train.csv"
             data_csv_data_filename = os.path.join(target,fname)
             X, y, header = load_csv_data(data_csv_data_filename, mode="regr", verbose=False)
             # Train different depth model tree fits and plot results
@@ -32,7 +32,7 @@ def main():
             #plot_model_tree_fit(mean_regr(), X, y, name, mapes, rmses, target)
             from models.linear_regr import linear_regr
             data = plot_model_tree_fit(linear_regr(), X, y, name, target, error)
-            sdate = 1547769600000
+            sdate = 1548979200000
             if target == "twitter_event":
                 tt[key]["EventCount"] = {}
                 for i in range(len(data)):
@@ -62,9 +62,9 @@ def main():
     error = error/108
     print("rmse:",  error[0])
     print("ape:", error[1])
-    with open('youtube_tree_decay_randomforest.json', 'w') as outfile:
+    with open('youtube_tree_decay_randomforest_dryrun.json', 'w') as outfile:
         json.dump(yt, outfile)
-    with open('twitter_tree_decay_randomforest.json', 'w') as outfile:
+    with open('twitter_tree_decay_randomforest_dryrun.json', 'w') as outfile:
         json.dump(tt, outfile)
 # ********************************
 #
@@ -108,7 +108,7 @@ def plot_model_tree_fit(model, X, y, name,  target, error):
             # Train model tree
             model_tree.fit(X_real, Y_real, verbose=False)
             
-            data_csv_data_filename = os.path.join(target, name+"_bert_1day_0_test.csv")
+            data_csv_data_filename = os.path.join(target, name+"_bert_1day_500_decay_dryrun_test.csv")
             X_test, y_test, header = load_csv_data(data_csv_data_filename, mode="regr", verbose=False)
             y_train_pred = model_tree.predict (X)
             y_pred = model_tree.predict(X_test)
@@ -116,9 +116,9 @@ def plot_model_tree_fit(model, X, y, name,  target, error):
             placeholder.append(y_pred)
         placeholder = np.array(placeholder)
         final_pred = placeholder.mean(axis = 0)
-        rmse, ape = evaluation(y_test, final_pred)
-        error[0] += rmse
-        error[1] += ape
+        #rmse, ape = evaluation(y_test, final_pred)
+        #error[0] += rmse
+        #error[1] += ape
         return final_pred
 
 

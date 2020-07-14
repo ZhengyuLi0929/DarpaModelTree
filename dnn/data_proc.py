@@ -177,7 +177,7 @@ def generate_training_data(platform, asp, K=10):
 		for j in range(n):
 			W.append(w)
 
-		for i in range(2,25):
+		for i in range(2,39):
 			I = arr_gdelt[:,i+k:i+k+n].T
 			x = I*np.array(W)
 			x = x.flatten()
@@ -194,18 +194,18 @@ def generate_training_data(platform, asp, K=10):
 		fy = open('./test/'+platform+'/'+id+'_bert_'+asp+'_y.csv', 'w')
 		fp = open('./test/'+platform+'/'+id+'_bert_'+asp+'_y_prev.csv', 'w')
 
-		for i in range(25,39):
+		for i in range(39,53):
 			I = arr_gdelt[:,i+k:i+k+n].T
 			x = I*np.array(W)
 			x = x.flatten()
-			y = arr_event[i]
+			y = 0#arr_event[i]
 			fx.write(','.join(str(e) for e in x)+'\n')
 			fi.write(str(ind)+'\n')
 			fy.write(str(y)+'\n')
 
 		ind += 1
 
-		y_prev = arr_event[0:25]
+		y_prev = arr_event[0:39]
 		fp.write(','.join(str(e) for e in y_prev)+'\n')
 		fx.close()
 		fy.close()

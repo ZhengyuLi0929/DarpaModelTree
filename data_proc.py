@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import json
+import copy
 from sklearn.cluster import SpectralClustering
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
@@ -132,7 +133,7 @@ def generate_training_data(platform, section, K=10):
 	df_gdelt = df_gdelt.sort_index()
 
 	# Find the popular event ID we use as the input
-	active_event = df_gdelt[df_gdelt.sum(axis=1).gt(7000)].index.values
+	active_event = df_gdelt[df_gdelt.sum(axis=1).gt(500)].index.values
 
 	# active_gdelt = list(active_gdelt)
 	df_gdelt = df_gdelt.loc[active_event,:]
@@ -163,8 +164,8 @@ def generate_training_data(platform, section, K=10):
 		for j in range(n):
 			W.append(w)
 		id = infoID.replace('/','#')
-		f_train = open(os.path.join(path, id+'_bert_1day_7000_train.csv'), 'w')
-		for i in range(0,25):
+		f_train = open(os.path.join(path, id+'_bert_1day_500_decay_dryrun_train.csv'), 'w')
+		for i in range(0,39):
 			I = arr_gdelt[:,i+k:i+k+n].T
 			x = I*np.array(W)
 			x = x.flatten()
@@ -176,17 +177,17 @@ def generate_training_data(platform, section, K=10):
 			f_train.write(','+str(y)+'\n')
 		f_train.close()
 
-		f_test = open(os.path.join(path, id+'_bert_1day_7000_test.csv'), 'w')
-		for i in range(25,39):
+		f_test = open(os.path.join(path, id+'_bert_1day_500_decay_dryrun_test.csv'), 'w')
+		for i in range(39,53):
 			I = arr_gdelt[:,i+k:i+k+n].T
 			x = I*np.array(W)
 			x = x.flatten()
-			y = arr_event[i]
-			if i == 25:
+			#y = arr_event[i]
+			if i == 39:
 				f_test.write(','.join("x"+str(cn) for cn in range(len(x))))
 				f_test.write(",y\n")
 			f_test.write(','.join(str(e) for e in x))
-			f_test.write(','+str(y)+'\n')
+			f_test.write(','+'0'+'\n')
 
 		ind += 1
 
@@ -197,7 +198,7 @@ def generate_training_data(platform, section, K=10):
 
 if __name__ == '__main__':
 
-	#gdelt_to_csv()
+	gdelt_to_csv()
 	#corr_to_csv()
 
 	platforms = ['twitter', 'youtube']

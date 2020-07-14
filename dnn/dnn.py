@@ -87,11 +87,11 @@ class dnn:
         
         
         
-        h_layer1 = tf.layers.dense(inputs=x, units=1, name='h0', activation=tf.nn.relu)
+        #h_layer1 = tf.layers.dense(inputs=x, units=1, name='h0', activation=tf.nn.relu)
         #h_layer0 = tf.layers.dense(inputs=x, units=100, name='h0', activation=tf.nn.relu)
         #h_layer0_drop = tf.nn.dropout(h_layer0, self.keep_prob, name='h0_drop')
         #h_layer1 = tf.layers.dense(inputs = h_layer0, units = 1, name = 'h1', activation = tf.nn.relu)
-        '''
+        
         stop1 = int(self._xdims/5)
         x1 = x[:,:stop1]
         x2 = x[:,stop1:2*stop1]
@@ -111,7 +111,7 @@ class dnn:
         
         layer_2 = tf.concat([d1,d2,d3,d4,d5], 1)
         h_layer1 = tf.layers.dense(inputs=layer_2, units=1, name='output', activation=tf.nn.relu)
-        '''
+        
         '''
         out = tf.multiply(s,h_layer1)
         self.out = out
@@ -221,10 +221,12 @@ class dnn:
                         
                         pred_y = self.predict(test_x, test_ind).flatten()
                         pred_y = postprocess(pred_y)
-                        
+                        '''
+                        # evaluation
                         rmse, ape = evaluation(test_y, pred_y)
                         test_loss_mse += rmse
                         test_loss_mape += ape
+                        '''
                         '''
                         if infoID == "violence" or infoID == "protests":
                             print(pred_y)
@@ -285,11 +287,13 @@ class dnn:
                         os.mkdir(path)
                     saver.save(sess, path+str(i))
                     '''
+                    '''
                     print(' step %d, test loss rmse %g' % (i, round (test_loss_mse/18, 4)))
                     print(' step %d, test loss mape %g' % (i, round (test_loss_mape/18, 4)))
+                    
                     # save i value for plotting
                     val_i.append(i)
-                    
+                    '''
                     # end condition
                     #if i > 5000 and abs(loss_train_rmse[-1] - loss_train_rmse[-2]) < 2:
                      #   break
@@ -392,6 +396,7 @@ for choice in options:
         # print(pred_y, type(pred_y))
         
         # base = datetime.datetime.today()
+        '''
         base = datetime.datetime.strptime("2019/01/18", "%Y/%M/%d")
         t1 = [base + datetime.timedelta(days=x) for x in range(0,14)]
         t2 = [base + datetime.timedelta(days=x) for x in range(-25, 14)]
@@ -414,8 +419,8 @@ for choice in options:
         if not os.path.exists(path):
             os.mkdir(path)
         plt.savefig(path+'/'+infoID+'_event_dnn.png')
-        
-        sdate = 1547769600000
+        '''
+        sdate = 1548979200000
         if asp == 'event':
             option = 'EventCount'
         elif asp == 'user':
@@ -431,14 +436,16 @@ for choice in options:
                 yt[key][option][str(sdate + i * 86400000)] = int(pred_y[i])
     
     #print ("total error:", err)
-    print ("err sum:", sum(err))
-    
-tt[key] = pd.DataFrame(tt[key]).to_json()
-yt[key] = pd.DataFrame(yt[key]).to_json()
-with open('youtube_dnn_dense+sep_decay.json', 'w') as outfile:
-    json.dump(yt, outfile)
-with open('twitter_dnn_dense+sep_decay.json', 'w') as outfile:
-    json.dump(tt, outfile)
+    #print ("err sum:", sum(err))
+outt = {}
+outy = {}
+outt[key] = pd.DataFrame(tt[key]).to_json()
+outy[key] = pd.DataFrame(yt[key]).to_json()
+
+with open('youtube_dnn_dense+sep_decay_dryrun.json', 'w') as outfile:
+    json.dump(outy, outfile)
+with open('twitter_dnn_dense+sep_decay_dryrun.json', 'w') as outfile:
+    json.dump(outt, outfile)
 
 
     
