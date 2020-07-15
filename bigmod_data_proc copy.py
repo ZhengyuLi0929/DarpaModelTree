@@ -29,15 +29,15 @@ import seaborn as sns
 with open("darpa_data_raw/cp4_nodelist.txt",'r') as wf:
     selected_na = [line.strip() for line in wf]
     
-split = 39
+split = 46
 platform = "twitter"
 data_path = "./data_json/"
 text_path = "./data_json/"
-with open(data_path + platform + "_time_series.json") as f:
+with open(data_path + platform + "_time_series_to_2_7.json") as f:
     twitter_file = json.loads(f.read())
     twitter = {k: pd.read_json(v, orient='columns') for k, v in twitter_file.items()}
 
-with open(data_path + "youtube_time_series.json") as f:
+with open(data_path + "youtube_time_series_to_2_7.json") as f:
     youtube_file = json.loads(f.read())
     youtube = {k: pd.read_json(v, orient='columns') for k, v in youtube_file.items()}
     
@@ -58,7 +58,7 @@ eventCode = [event for event in eventCodeMap]
 #narrative = [event for event in twitter]
 narrative = [event for event in youtube]
 
-with open(text_path + 'corrmat_bert_all_norm.json', 'r') as f:
+with open(text_path + 'corrmat_to_2_7.json', 'r') as f:
     corr_text = json.loads(f.read())
 twitterGdeltMat_text = np.array(corr_text['twitterGdeltMat'])
 youtuveGdeltMat_text = np.array(corr_text['youtubeGdeltMat'])
@@ -86,7 +86,7 @@ def dataloader_yt(gdelt_cut, corr_cut, option):
                 else:
                     X.append(0)
             X_train.append(np.array(X))
-        for i in range(split, 53):
+        for i in range(split, 60):
             '''
             if option == 'EventCount':
                 Y_test.append(youtube[item].EventCount.tolist()[i])
@@ -135,7 +135,7 @@ def dataloader(gdelt_cut, corr_cut, option):
                 else:
                     X.append(0)
             X_train.append(np.array(X))
-        for i in range(split, 53):
+        for i in range(split, 60):
             '''
             if option == 'EventCount':
                 Y_test.append(twitter[item].EventCount.tolist()[i])
@@ -270,12 +270,12 @@ if d == 1:
         
         X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(200, 0, option)
 
-        for index in range(len(narrative)):
+        for index in range(len(selected_na)):
             # read dnn results
-            with open("twitter_dnn_dense+sep_decay_dryrun_output.json") as f:
+            with open("twitter_UIUC_HYBRID_TEXT_.json") as f:
                 dnn_file = json.loads(f.read())
                 dnn_data = {k: pd.read_json(v, orient='columns') for k, v in dnn_file.items()}
-            key = narrative[index].replace('/','#')
+            key = selected_na[index]
             if option == "EventCount":
                 Y_pred = dnn_data[key].EventCount.tolist()
             elif option == "UserCount":
@@ -320,7 +320,7 @@ if d == 1:
             placeholder = np.array(placeholder)
             final_pred = placeholder.mean(axis = 0)
 
-            result[narrative[index]][option] = final_pred
+            result[key][option] = final_pred
             
         #print("RMSE: %f, APE: %f" %(rmse/len(narrative), ape/len(narrative)))
         '''
@@ -341,7 +341,7 @@ if d == 1:
                 #draw_m2(index, result[narrative[index]][option])
                 # write file
                 
-                sdate = 1548979200000 # 2-1
+                sdate = 1549584000000 # 2-7
                 for i in range(len(this)):
                     output[narrative[index]][option][str(sdate + i * 86400000)] = int(this[i])
                 
@@ -358,7 +358,7 @@ if d == 1:
 final = {}
 for na in selected_na:
     final[na] = pd.DataFrame(output[na]).to_json()
-with open('twitter_hybrid_dryruns.json', 'w') as outfile:
+with open('twitter_UIUC_HYBRID_GDELT_.json', 'w') as outfile:
     json.dump(final, outfile)
 
 '''

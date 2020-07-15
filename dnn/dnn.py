@@ -120,7 +120,7 @@ class dnn:
         '''
         return h_layer1
 
-    def train(self, train_x, train_y, train_ind, IDs, asp, plt, batch_size=200, learn_rate=0.01):
+    def train(self, train_x, train_y, train_ind, IDs, asp, plt, batch_size=500, learn_rate=0.001):
         
         update_var_list = []
         tvars = tf.trainable_variables()
@@ -213,10 +213,10 @@ class dnn:
                         #    continue
                         '''
                         infoID = infoID.replace('/','#')
-                        test_x = np.loadtxt('./test/'+self.platform+'/'+infoID+'_bert_'+asp+'_x.csv', delimiter=',')
-                        test_y = np.loadtxt('./test/'+self.platform+'/'+infoID+'_bert_'+asp+'_y.csv', delimiter=',')
+                        test_x = np.loadtxt('./test/'+self.platform+'/'+infoID+'_bert_'+asp+'_27_x.csv', delimiter=',')
+                        test_y = np.loadtxt('./test/'+self.platform+'/'+infoID+'_bert_'+asp+'_27_y.csv', delimiter=',')
                         #====
-                        test_ind = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_ind.csv', delimiter=',')
+                        test_ind = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_27_ind.csv', delimiter=',')
                         #====
                         
                         pred_y = self.predict(test_x, test_ind).flatten()
@@ -298,7 +298,7 @@ class dnn:
                     #if i > 5000 and abs(loss_train_rmse[-1] - loss_train_rmse[-2]) < 2:
                      #   break
                     
-                if (i == 500) or (i == 20 and plt == "youtube"):
+                if (i == 1000) or (i == 40 and plt == "youtube"):
                     break
                 i += 1
             saver.save(sess, self.log_file)
@@ -342,7 +342,7 @@ class dnn:
 
 
 # main
-options = ["twitter_event","twitter_user","twitter_newuser","youtube_event","youtube_user","youtube_newuser"]
+options =["youtube_event","youtube_user","youtube_newuser","twitter_event","twitter_user","twitter_newuser"]
 infoIDs_twitter = ["arrests","arrests/opposition","guaido/legitimate","international/aid","international/aid_rejected",
 "international/respect_sovereignty","maduro/cuba_support","maduro/dictator","maduro/legitimate",
 "maduro/narco","military","military/desertions","other/anti_socialism","other/censorship_outage",
@@ -350,6 +350,8 @@ infoIDs_twitter = ["arrests","arrests/opposition","guaido/legitimate","internati
 
 tt = {}
 yt = {}
+outt = {}
+outy = {}
 for ids in infoIDs_twitter:
     tt[ids] = dict()
     yt[ids] = dict()
@@ -366,9 +368,9 @@ for choice in options:
     platform = choice.split('_')[0]
     asp = choice.split('_')[1]
 
-    train_x = np.loadtxt('./train/'+platform+'/'+str(n)+'/bert_'+asp+'_x.csv', delimiter=',')
-    train_ind = np.loadtxt('./train/'+platform+'/'+str(n)+'/bert_'+asp+'_ind.csv')
-    train_y = np.loadtxt('./train/'+platform+'/'+str(n)+'/bert_'+asp+'_y.csv', delimiter=',')
+    train_x = np.loadtxt('./train/'+platform+'/'+str(n)+'/bert_'+asp+'_27_x.csv', delimiter=',')
+    train_ind = np.loadtxt('./train/'+platform+'/'+str(n)+'/bert_'+asp+'_27_ind.csv')
+    train_y = np.loadtxt('./train/'+platform+'/'+str(n)+'/bert_'+asp+'_27_y.csv', delimiter=',')
     train_y = train_y.reshape(len(train_y),1)
     print(train_x.shape)
     
@@ -384,10 +386,10 @@ for choice in options:
             #continue
         key = infoID
         infoID = infoID.replace('/','#')
-        test_x = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_x.csv', delimiter=',')
-        test_ind = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_ind.csv', delimiter=',')
-        test_y = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_y.csv', delimiter=',')
-        test_p = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_y_prev.csv', delimiter=',')
+        test_x = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_27_x.csv', delimiter=',')
+        test_ind = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_27_ind.csv', delimiter=',')
+        test_y = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_27_y.csv', delimiter=',')
+        test_p = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_27_y_prev.csv', delimiter=',')
 
         pred_y = pr.predict(test_x, test_ind).flatten()
         pred_y = postprocess(pred_y)
@@ -420,7 +422,7 @@ for choice in options:
             os.mkdir(path)
         plt.savefig(path+'/'+infoID+'_event_dnn.png')
         '''
-        sdate = 1548979200000
+        sdate = 1549584000000 # 2-7
         if asp == 'event':
             option = 'EventCount'
         elif asp == 'user':
@@ -435,17 +437,13 @@ for choice in options:
             for i in range(len(pred_y)):
                 yt[key][option][str(sdate + i * 86400000)] = int(pred_y[i])
     
+        outt[key] = pd.DataFrame(tt[key]).to_json()
+        outy[key] = pd.DataFrame(yt[key]).to_json()
     #print ("total error:", err)
     #print ("err sum:", sum(err))
-outt = {}
-outy = {}
-outt[key] = pd.DataFrame(tt[key]).to_json()
-outy[key] = pd.DataFrame(yt[key]).to_json()
 
-with open('youtube_dnn_dense+sep_decay_dryrun.json', 'w') as outfile:
+with open('youtube_HYBRID_TEXT_.json', 'w') as outfile:
     json.dump(outy, outfile)
-with open('twitter_dnn_dense+sep_decay_dryrun.json', 'w') as outfile:
+with open('twitter_HYBRID_TEXT_.json', 'w') as outfile:
     json.dump(outt, outfile)
-
-
     

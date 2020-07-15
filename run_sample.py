@@ -32,7 +32,7 @@ def main():
             #plot_model_tree_fit(mean_regr(), X, y, name, mapes, rmses, target)
             from models.linear_regr import linear_regr
             data = plot_model_tree_fit(linear_regr(), X, y, name, target, error)
-            sdate = 1548979200000
+            sdate = 1549584000000
             if target == "twitter_event":
                 tt[key]["EventCount"] = {}
                 for i in range(len(data)):
@@ -62,9 +62,9 @@ def main():
     error = error/108
     print("rmse:",  error[0])
     print("ape:", error[1])
-    with open('youtube_tree_decay_randomforest_dryrun.json', 'w') as outfile:
+    with open('youtube_UIUC_NN_TEXT_.json', 'w') as outfile:
         json.dump(yt, outfile)
-    with open('twitter_tree_decay_randomforest_dryrun.json', 'w') as outfile:
+    with open('twitter_UIUC_NN_TEXT_.json', 'w') as outfile:
         json.dump(tt, outfile)
 # ********************************
 #

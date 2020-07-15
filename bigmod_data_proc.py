@@ -29,15 +29,15 @@ import seaborn as sns
 with open("darpa_data_raw/cp4_nodelist.txt",'r') as wf:
     selected_na = [line.strip() for line in wf]
     
-split = 39
+split = 46
 platform = "twitter"
 data_path = "./data_json/"
 text_path = "./data_json/"
-with open(data_path + platform + "_time_series.json") as f:
+with open(data_path + platform + "_time_series_to_2_7.json") as f:
     twitter_file = json.loads(f.read())
     twitter = {k: pd.read_json(v, orient='columns') for k, v in twitter_file.items()}
 
-with open(data_path + "youtube_time_series.json") as f:
+with open(data_path + "youtube_time_series_to_2_7.json") as f:
     youtube_file = json.loads(f.read())
     youtube = {k: pd.read_json(v, orient='columns') for k, v in youtube_file.items()}
     
@@ -45,7 +45,7 @@ with open(text_path + "gdelt_time_series.json",encoding="utf-8") as f:
     gdelt_file = json.loads(f.read())
     gdelt = {k: pd.read_json(v, typ='series') for k, v in gdelt_file.items()}
 
-with open(text_path + 'corrmat_bert_all_norm.json', 'r') as f:
+with open(text_path + 'corrmat_to_2_7.json', 'r') as f:
     corr = json.loads(f.read())
 
 eventCodeMap = corr['eventCodeMap']
@@ -65,7 +65,7 @@ youtuveGdeltMat_text = np.array(corr_text['youtubeGdeltMat'])
 narrativeMap_text = corr_text['narrativeMap']
 
 def dataloader_yt(gdelt_cut, corr_cut, option):
-    X_train, X_test, X_pred, Y_train, Y_test, sample_weight = [], [], [], [], [], []
+    X_train, X_test, Y_train, Y_test, sample_weight = [], [], [], [], []
     filted_gdelt = []
     for event in gdelt:
         if gdelt[event].sum() > gdelt_cut:
@@ -86,7 +86,7 @@ def dataloader_yt(gdelt_cut, corr_cut, option):
                 else:
                     X.append(0)
             X_train.append(np.array(X))
-        for i in range(split, 53):
+        for i in range(split, 60):
             '''
             if option == 'EventCount':
                 Y_test.append(youtube[item].EventCount.tolist()[i])
@@ -102,18 +102,10 @@ def dataloader_yt(gdelt_cut, corr_cut, option):
                 else:
                     X.append(0)
             X_test.append(np.array(X))
-        for i in range(40, 70):
-            X = []
-            for event in filted_gdelt:
-                if youtubeGdeltMat[eventCodeMap[event],narrativeMap[item]] > corr_cut:
-                    X.append(gdelt[event].tolist()[i] * youtubeGdeltMat[eventCodeMap[event],narrativeMap[item]])
-                else:
-                    X.append(0)
-            X_pred.append(np.array(X))
-    return X_train, X_test, X_pred, Y_train, Y_test, sample_weight
+    return X_train, X_test, Y_train, Y_test, sample_weight
 
 def dataloader(gdelt_cut, corr_cut, option):
-    X_train, X_test, X_pred, Y_train, Y_test, sample_weight = [], [], [], [], [], []
+    X_train, X_test,Y_train, Y_test, sample_weight = [], [], [], [], []
     filted_gdelt = []
     for event in gdelt:
         if gdelt[event].sum() > gdelt_cut:
@@ -135,7 +127,7 @@ def dataloader(gdelt_cut, corr_cut, option):
                 else:
                     X.append(0)
             X_train.append(np.array(X))
-        for i in range(split, 53):
+        for i in range(split, 60):
             '''
             if option == 'EventCount':
                 Y_test.append(twitter[item].EventCount.tolist()[i])
@@ -151,15 +143,7 @@ def dataloader(gdelt_cut, corr_cut, option):
                 else:
                     X.append(0)
             X_test.append(np.array(X))
-        for i in range(40, 70):
-            X = []
-            for event in filted_gdelt:
-                if twitterGdeltMat[eventCodeMap[event],narrativeMap[item]] > corr_cut:
-                    X.append(gdelt[event].tolist()[i] * twitterGdeltMat[eventCodeMap[event],narrativeMap[item]])
-                else:
-                    X.append(0)
-            X_pred.append(np.array(X))
-    return X_train, X_test, X_pred, Y_train, Y_test, sample_weight
+    return X_train, X_test,Y_train, Y_test, sample_weight
 
 def evaluation(Y_test, Y_pred):
     rmse = np.sqrt(mse(np.array(Y_test).cumsum()/(sum(Y_test) + 0.1), np.array(Y_pred).cumsum()/(sum(Y_pred) + 0.1)))
@@ -213,17 +197,17 @@ def postprocess(pred):
     return pred
     
 #nonlinear(gdelt)
-gdelt = decay(gdelt, 0.88)
+gdelt = decay(gdelt, 0.95)
 '''
 for option in ['EventCount', 'UserCount', 'NewUserCount']:
-    X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(7000,0, option)
+    X_train, X_test, , Y_train, Y_test, sample_weight = dataloader(7000,0, option)
     print("=========================X_train===============================")
     print(X_train[0])
     print(len(X_train))
     print("=========================X_test===============================")
     #print(X_test)
-    print("=========================X_pred===============================")
-    #print(X_pred)
+    print("========================================================")
+    #print()
     print("=========================Y_train===============================")
     print(Y_train)
     print(len(Y_train))
@@ -250,7 +234,7 @@ d = 1
 if d == 1:
     print("depth:", d)
     for option in ['EventCount', 'UserCount', 'NewUserCount']:
-        X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(520,0, option)
+        X_train, X_test,Y_train, Y_test, sample_weight = dataloader(0,0, option)
         #print(len(X_train), len(X_test), len(Y_train), len(Y_test))
         '''
         regression = LinearRegression(fit_intercept=False,normalize=True)
@@ -267,7 +251,7 @@ if d == 1:
         Y_pred = postprocess(Y_pred)
         
         
-        X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(200, 0, option)
+        X_train, X_test, Y_train, Y_test, sample_weight = dataloader(200, 0, option)
 
         for index in range(len(narrative)):
             #regression = LinearRegression(fit_intercept=False,normalize=True)
@@ -285,11 +269,11 @@ if d == 1:
             #result[narrative[index]][option] = pred
             X = np.array(X_train[split * index: split * (index + 1)])
             y = np.array(Y_train[split * index: split * (index + 1)])
-            bag = 15
+            bag = 10
             placeholder = []
-            if bag == 15:
+            #if bag == 15:
             # random forest
-                '''
+                
             for i in range(bag):
                 X_real = copy.deepcopy(X)
                 Y_real = copy.deepcopy(y)
@@ -300,7 +284,7 @@ if d == 1:
                     mask = randrange(len(X_real))
                     X_real = np.delete(X_real, mask, 0)
                     Y_real = np.delete(Y_real, mask, 0)
-                '''
+            
                 # single one
                 leaf = 5
                 depth = 0
@@ -337,7 +321,7 @@ if d == 1:
                 #draw_m2(index, result[narrative[index]][option])
                 # write file
                 
-                sdate = 1548979200000 # 2-1
+                sdate = 1549584000000 # 2-7
                 for i in range(len(this)):
                     output[narrative[index]][option][str(sdate + i * 86400000)] = int(this[i])
                 
@@ -354,7 +338,7 @@ if d == 1:
 final = {}
 for na in selected_na:
     final[na] = pd.DataFrame(output[na]).to_json()
-with open('twitter_bert_mixed_decay_randomforest_dryrun.json', 'w') as outfile:
+with open('twitter_UIUC_NN_GDELT_.json', 'w') as outfile:
     json.dump(final, outfile)
 
 '''

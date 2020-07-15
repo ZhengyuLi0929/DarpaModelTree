@@ -25,7 +25,7 @@ def json_to_csv(platform):
 	InfoID 2018-12-24, 2018-12-25, ..., 
 	ID1        x           x
 	'''
-	with open('./data_json/'+platform+'_time_series.json', 'r') as f:
+	with open('./data_json/'+platform+'_time_series_to_2_7.json', 'r') as f:
 	    d = json.loads(f.read())
 
 	# print d.keys()
@@ -33,7 +33,7 @@ def json_to_csv(platform):
 	dd = {k: pd.read_json(v, orient='columns') for k, v in d.items()}
 
 	index = list(dd.keys())
-	column = dd[index[0]].index.values[:-1]
+	column = dd[index[0]].index.values[:]
 
 	#print(index)
 
@@ -42,9 +42,9 @@ def json_to_csv(platform):
 	arr_newuser = []
 
 	for key in index:
-		arr_event.append(dd[key]['EventCount'].values[:-1])
-		arr_user.append(dd[key]['UserCount'].values[:-1])
-		arr_newuser.append(dd[key]['NewUserCount'].values[:-1])
+		arr_event.append(dd[key]['EventCount'].values[:])
+		arr_user.append(dd[key]['UserCount'].values[:])
+		arr_newuser.append(dd[key]['NewUserCount'].values[:])
 
 	arr_event = np.array(arr_event)
 	arr_user = np.array(arr_user)
@@ -54,9 +54,9 @@ def json_to_csv(platform):
 	df_user = pd.DataFrame(arr_user, index=index, columns=column)
 	df_newuser = pd.DataFrame(arr_newuser, index=index, columns=column)
 
-	df_event.to_csv('./data_csv/'+platform+'_event.csv', index_label='InfoID')
-	df_user.to_csv('./data_csv/'+platform+'_user.csv', index_label='InfoID')
-	df_newuser.to_csv('./data_csv/'+platform+'_newuser.csv', index_label='InfoID')
+	df_event.to_csv('./data_csv/'+platform+'_27_event.csv', index_label='InfoID')
+	df_user.to_csv('./data_csv/'+platform+'_27_user.csv', index_label='InfoID')
+	df_newuser.to_csv('./data_csv/'+platform+'_27_newuser.csv', index_label='InfoID')
 
 def gdelt_to_csv():
 	# GDELT time series: form json to csv
@@ -92,7 +92,7 @@ def corr_to_csv():
 	# infoID1,    c11  ,    c12  , ...
 	# infoID2,    c21  ,    c22  , ...
 
-	with open('./data_json/corrmat_west_en_norm.json', 'r') as f:
+	with open('./data_json/corrmat_to_2_7.json', 'r') as f:
 	    d = json.loads(f.read())
 
 	corr_twitter = np.array(d['twitterGdeltMat'])
@@ -108,8 +108,8 @@ def corr_to_csv():
 	df_twitter = pd.DataFrame(corr_twitter.T, index=infoID, columns=eventID)
 	df_youtube = pd.DataFrame(corr_youtube.T, index=infoID, columns=eventID)
 
-	df_twitter.to_csv('./data_csv/corr_west_twitter.csv')
-	df_youtube.to_csv('./data_csv/corr_west_youtube.csv')
+	df_twitter.to_csv('./data_csv/corr_27_twitter.csv')
+	df_youtube.to_csv('./data_csv/corr_27_youtube.csv')
 
 def generate_training_data(platform, section, K=10):
 	'''
@@ -118,14 +118,14 @@ def generate_training_data(platform, section, K=10):
 	'''
 	path = './' + platform+ '_' + section +'/'
 	# read narrative time series
-	df_event = pd.read_csv('./data_csv/'+platform+'_' + section + '.csv', header=0,index_col=0)
+	df_event = pd.read_csv('./data_csv/'+platform+'_27_' + section + '.csv', header=0,index_col=0)
 
 	# read GDELT time series
 	df_gdelt = pd.read_csv('./data_csv/gdelt.csv', header=0,dtype={'InfoID':str})
 	df_gdelt.set_index('InfoID', inplace=True)
 
 	# read correlation
-	df_corr = pd.read_csv('./data_csv/corr_bert_'+platform+'.csv', header=0,index_col=0)
+	df_corr = pd.read_csv('./data_csv/corr_27_'+platform+'.csv', header=0,index_col=0)
 
 	infoIDs = sorted(df_event.index.values) # narrative
 	# eventIDs = df_corr.columns.values # GDELT
@@ -165,7 +165,7 @@ def generate_training_data(platform, section, K=10):
 			W.append(w)
 		id = infoID.replace('/','#')
 		f_train = open(os.path.join(path, id+'_bert_1day_500_decay_dryrun_train.csv'), 'w')
-		for i in range(0,39):
+		for i in range(0,46):
 			I = arr_gdelt[:,i+k:i+k+n].T
 			x = I*np.array(W)
 			x = x.flatten()
@@ -178,12 +178,12 @@ def generate_training_data(platform, section, K=10):
 		f_train.close()
 
 		f_test = open(os.path.join(path, id+'_bert_1day_500_decay_dryrun_test.csv'), 'w')
-		for i in range(39,53):
+		for i in range(46,60):
 			I = arr_gdelt[:,i+k:i+k+n].T
 			x = I*np.array(W)
 			x = x.flatten()
 			#y = arr_event[i]
-			if i == 39:
+			if i == 46:
 				f_test.write(','.join("x"+str(cn) for cn in range(len(x))))
 				f_test.write(",y\n")
 			f_test.write(','.join(str(e) for e in x))
@@ -199,7 +199,7 @@ def generate_training_data(platform, section, K=10):
 if __name__ == '__main__':
 
 	gdelt_to_csv()
-	#corr_to_csv()
+	corr_to_csv()
 
 	platforms = ['twitter', 'youtube']
 	sec = ['event', 'user','newuser']
