@@ -65,7 +65,7 @@ def gdelt_to_csv():
 	gdelt = {k: pd.read_json(v, typ='series') for k, v in d.items()}
     
 	# GDELT decay
-	decay_factor = 0.88
+	decay_factor = 0.95
 	Y = copy.deepcopy(gdelt)
 	for event in gdelt:
 		date = gdelt[event].index

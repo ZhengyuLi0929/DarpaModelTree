@@ -213,7 +213,7 @@ def postprocess(pred):
     return pred
     
 #nonlinear(gdelt)
-gdelt = decay(gdelt, 0.88)
+gdelt = decay(gdelt, 0.95)
 '''
 for option in ['EventCount', 'UserCount', 'NewUserCount']:
     X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(7000,0, option)
@@ -297,7 +297,7 @@ if d == 1:
             #result[narrative[index]][option] = pred
             X = np.array(X_train[split * index: split * (index + 1)])
             y = np.array(Y_train[split * index: split * (index + 1)])
-            bag = 15
+            bag = 10
             placeholder = []
             for i in range(bag):
                 X_real = copy.deepcopy(X)
