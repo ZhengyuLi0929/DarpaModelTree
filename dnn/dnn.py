@@ -9,6 +9,8 @@ import json
 import os
 
 import tensorflow.compat.v1 as tf
+import tensorflow.math as tm
+import tensorflow.keras.backend as tk
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -47,17 +49,19 @@ class dnn:
         self.y_placeholder = tf.placeholder(tf.float32, [None, ydims])
         self.ind_placeholder = tf.placeholder(tf.int32, [None, ])
 
-        self.scale = tf.ones(shape=[47,1])
+        self.scale = tf.ones(shape=[18,1])
         self.scale = tf.Variable(self.scale, name = "scale")
         
         self.keep_prob = tf.placeholder(tf.float32)
         self.y_pred = self.deepnn(self.x_placeholder, self.ind_placeholder)
 
         self.loss = tf.sqrt(tf.losses.mean_squared_error(self.y_placeholder, self.y_pred))
+        #self.loss = tf.sqrt(tf.losses.mean_squared_error(tm.cumsum(self.y_placeholder)/(tk.sum(self.y_placeholder) + 0.1), tm.cumsum(self.y_pred)/(tk.sum(self.y_pred) + 0.1)))
 
         self.log_file = log_file
         self.x_for_loss = x_for_loss
         self.y_for_loss = tf.constant(y_for_loss, dtype=tf.float32)
+        self.normalized_rmse = tf.sqrt(tf.losses.mean_squared_error(tm.cumsum(self.y_for_loss)/(tk.sum(self.y_for_loss) + 0.1), tm.cumsum(self.y_pred)/(tk.sum(self.y_pred) + 0.1)))
         self.train_loss = tf.sqrt(tf.losses.mean_squared_error(self.y_for_loss, self.y_pred))
         #self.loss_mape = np.mean(np.abs(self.y_for_loss.eval() - self.y_pred.eval()) / self.y_for_loss.eval())
         
@@ -77,14 +81,14 @@ class dnn:
         print(x.shape)
         indices = ind
         self.ind = ind
-        depth = 47
+        depth = 18
         oh = tf.one_hot(indices, depth)
         self.oh = oh
 
         s = tf.matmul(oh, self.scale)
         self.s = s
-        '''
         
+        '''
         
         
         #h_layer1 = tf.layers.dense(inputs=x, units=1, name='h0', activation=tf.nn.relu)
@@ -92,24 +96,24 @@ class dnn:
         #h_layer0_drop = tf.nn.dropout(h_layer0, self.keep_prob, name='h0_drop')
         #h_layer1 = tf.layers.dense(inputs = h_layer0, units = 1, name = 'h1', activation = tf.nn.relu)
         
-        stop1 = int(self._xdims/5)
+        stop1 = int(self._xdims/3)
         x1 = x[:,:stop1]
         x2 = x[:,stop1:2*stop1]
         x3 = x[:,2*stop1:3*stop1]
-        x4 = x[:,3*stop1:4*stop1]
-        x5 = x[:,4*stop1:]
+        #x4 = x[:,3*stop1:4*stop1]
+        #x5 = x[:,4*stop1:]
         d1 = tf.layers.dense(inputs=x1, units=100, name='h0_1', activation=tf.nn.relu)
         d1_layer0_drop = tf.nn.dropout(d1, self.keep_prob, name='d1_drop')
         d2 = tf.layers.dense(inputs=x2, units=100, name='h0_2', activation=tf.nn.relu)
         d2_layer0_drop = tf.nn.dropout(d2, self.keep_prob, name='d2_drop')
         d3 = tf.layers.dense(inputs=x3, units=100, name='h0_3', activation=tf.nn.relu)
         d3_layer0_drop = tf.nn.dropout(d3, self.keep_prob, name='d3_drop')
-        d4 = tf.layers.dense(inputs=x2, units=100, name='h0_4', activation=tf.nn.relu)
-        d4_layer0_drop = tf.nn.dropout(d4, self.keep_prob, name='d2_drop')
-        d5 = tf.layers.dense(inputs=x3, units=100, name='h0_5', activation=tf.nn.relu)
-        d5_layer0_drop = tf.nn.dropout(d5, self.keep_prob, name='d3_drop')
+        #d4 = tf.layers.dense(inputs=x2, units=100, name='h0_4', activation=tf.nn.relu)
+        #d4_layer0_drop = tf.nn.dropout(d4, self.keep_prob, name='d2_drop')
+        #d5 = tf.layers.dense(inputs=x3, units=100, name='h0_5', activation=tf.nn.relu)
+        #d5_layer0_drop = tf.nn.dropout(d5, self.keep_prob, name='d3_drop')
         
-        layer_2 = tf.concat([d1,d2,d3,d4,d5], 1)
+        layer_2 = tf.concat([d1,d2,d3],1)#,d4,d5], 1)
         h_layer1 = tf.layers.dense(inputs=layer_2, units=1, name='output', activation=tf.nn.relu)
         
         '''
@@ -119,7 +123,8 @@ class dnn:
         return out
         '''
         return h_layer1
-
+        
+        
     def train(self, train_x, train_y, train_ind, IDs, asp, plt, batch_size=500, learn_rate=0.001):
         
         update_var_list = []
@@ -142,19 +147,23 @@ class dnn:
         with tf.Session() as sess:
             sess.run(tf.global_variables_initializer())
             i = 0
+            num_cal = 0
+            init_loss = 0
             while True:
                 index = train_index.next(batch_size)
 
                 x = train_x[index]
-            
+                
+                # normal train
                 sess.run(train_step, feed_dict={
                     self.x_placeholder: x,
                     self.y_placeholder: train_y[index],
                     self.keep_prob: 0.5}
                     )
+                
                 '''
                 # train scale vector
-                if (i > 9500 and i < 10000) or (i > 15500 and i < 16000):
+                if (i % 200 > 180 and plt == "twitter") or (i % 20 > 16 and plt == "youtube"):
                     train_vec = sess.run(train_all, feed_dict={
                     self.x_placeholder: x,
                     self.y_placeholder: train_y[index],
@@ -169,24 +178,33 @@ class dnn:
                     self.keep_prob: 0.5}
                     )
                 '''
-                if (i%500==0) or (i%20 == 0 and plt == "youtube"):
+                if (i%200==0) or (i%40 == 0 and plt == "youtube"):
+                    num_cal += 1
                     # training loss
                     
-                    train_loss = sess.run(self.train_loss, feed_dict={
+                    # no scale
+                    train_loss, N_rmse = sess.run([self.train_loss, self.normalized_rmse], feed_dict={
                         self.x_placeholder: self.x_for_loss,
                         self.keep_prob: 1.0}
                         )
+                    
                     '''
+                    # auto trained
                     #print(oh.shape)
                     #print(s.flatten())
                     
-                    train_loss, scale, out = sess.run([self.train_loss, self.scale, self.out], feed_dict={
+                    train_loss, scale, N_rmse, out = sess.run([self.train_loss, self.scale, self.normalized_rmse, self.out], feed_dict={
                         self.x_placeholder: self.x_for_loss,
                         self.ind_placeholder: train_ind,
                         self.keep_prob: 1.0}
                     )
                     '''
+                    if i == 0:
+                        init_loss = train_loss
                     print(' step %d, train loss %g' % (i, train_loss))
+                    print(' step %d, train rmse %g' % (i, N_rmse))
+                    
+                    # keep track of the loss
                     loss_train_rmse.append(train_loss)
                     
                     #print(' step %d, train mape loss %g' % (i, train_mape))
@@ -213,20 +231,20 @@ class dnn:
                         #    continue
                         '''
                         infoID = infoID.replace('/','#')
-                        test_x = np.loadtxt('./test/'+self.platform+'/'+infoID+'_bert_'+asp+'_27_x.csv', delimiter=',')
-                        test_y = np.loadtxt('./test/'+self.platform+'/'+infoID+'_bert_'+asp+'_27_y.csv', delimiter=',')
+                        test_x = np.loadtxt('./test/'+self.platform+'/'+infoID+'_bert_'+asp+'_131_x.csv', delimiter=',')
+                        test_y = np.loadtxt('./test/'+self.platform+'/'+infoID+'_bert_'+asp+'_131_y.csv', delimiter=',')
                         #====
-                        test_ind = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_27_ind.csv', delimiter=',')
+                        test_ind = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_131_ind.csv', delimiter=',')
                         #====
                         
                         pred_y = self.predict(test_x, test_ind).flatten()
                         pred_y = postprocess(pred_y)
-                        '''
+                        
                         # evaluation
                         rmse, ape = evaluation(test_y, pred_y)
                         test_loss_mse += rmse
                         test_loss_mape += ape
-                        '''
+                        
                         '''
                         if infoID == "violence" or infoID == "protests":
                             print(pred_y)
@@ -287,18 +305,18 @@ class dnn:
                         os.mkdir(path)
                     saver.save(sess, path+str(i))
                     '''
-                    '''
+                    
                     print(' step %d, test loss rmse %g' % (i, round (test_loss_mse/18, 4)))
                     print(' step %d, test loss mape %g' % (i, round (test_loss_mape/18, 4)))
                     
                     # save i value for plotting
                     val_i.append(i)
-                    '''
-                    # end condition
-                    #if i > 5000 and abs(loss_train_rmse[-1] - loss_train_rmse[-2]) < 2:
-                     #   break
                     
-                if (i == 1000) or (i == 40 and plt == "youtube"):
+                
+                # manual stop
+                #if (i == 1000) or (i == 160 and plt == "youtube"):
+                # auto stop
+                if num_cal > 2 and loss_train_rmse[-1]  < 0.5*init_loss:
                     break
                 i += 1
             saver.save(sess, self.log_file)
@@ -342,7 +360,7 @@ class dnn:
 
 
 # main
-options =["youtube_event","youtube_user","youtube_newuser","twitter_event","twitter_user","twitter_newuser"]
+options =["twitter_event","twitter_user","twitter_newuser","youtube_event","youtube_user","youtube_newuser"]
 infoIDs_twitter = ["arrests","arrests/opposition","guaido/legitimate","international/aid","international/aid_rejected",
 "international/respect_sovereignty","maduro/cuba_support","maduro/dictator","maduro/legitimate",
 "maduro/narco","military","military/desertions","other/anti_socialism","other/censorship_outage",
@@ -368,9 +386,9 @@ for choice in options:
     platform = choice.split('_')[0]
     asp = choice.split('_')[1]
 
-    train_x = np.loadtxt('./train/'+platform+'/'+str(n)+'/bert_'+asp+'_27_x.csv', delimiter=',')
-    train_ind = np.loadtxt('./train/'+platform+'/'+str(n)+'/bert_'+asp+'_27_ind.csv')
-    train_y = np.loadtxt('./train/'+platform+'/'+str(n)+'/bert_'+asp+'_27_y.csv', delimiter=',')
+    train_x = np.loadtxt('./train/'+platform+'/'+str(n)+'/bert_'+asp+'_131_x.csv', delimiter=',')
+    train_ind = np.loadtxt('./train/'+platform+'/'+str(n)+'/bert_'+asp+'_131_ind.csv')
+    train_y = np.loadtxt('./train/'+platform+'/'+str(n)+'/bert_'+asp+'_131_y.csv', delimiter=',')
     train_y = train_y.reshape(len(train_y),1)
     print(train_x.shape)
     
@@ -378,7 +396,8 @@ for choice in options:
     pr = dnn(train_x.shape[1], train_y.shape[1], './log/'+platform+'/', train_x, train_y, platform, k, n)
     pr.train(train_x, train_y, train_ind, infoIDs_twitter, asp, platform)
     #pr.plot_loss()
-    err = 0
+    rmse = 0
+    ape = 0
     for infoID in infoIDs_twitter:
         #BAD = ["arrests/opposition", "maduro/narco", "arrests/opposition/media", "crisis/looting", "maduro/illegitimate", "other/censorship_outage", "international/emigration", "violence/against_opposition/protesters", "international/break_us_relations", "maduro/events/pro", "maduro/legitimate/international", "maduro/events/anti", "other/request_observers", "assembly/illegitimate"]
         #REALLY_BAD = ["maduro/legitimate/international", "maduro/events/anti", "other/request_observers", "assembly/illegitimate"]
@@ -386,22 +405,23 @@ for choice in options:
             #continue
         key = infoID
         infoID = infoID.replace('/','#')
-        test_x = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_27_x.csv', delimiter=',')
-        test_ind = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_27_ind.csv', delimiter=',')
-        test_y = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_27_y.csv', delimiter=',')
-        test_p = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_27_y_prev.csv', delimiter=',')
-
+        test_x = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_131_x.csv', delimiter=',')
+        test_ind = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_131_ind.csv', delimiter=',')
+        test_y = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_131_y.csv', delimiter=',')
+        test_p = np.loadtxt('./test/'+platform+'/'+infoID+'_bert_'+asp+'_131_y_prev.csv', delimiter=',')
         pred_y = pr.predict(test_x, test_ind).flatten()
         pred_y = postprocess(pred_y)
 
         # print(test_y, type(test_y))
         # print(pred_y, type(pred_y))
-        
+        rmse_, ape_ = evaluation(test_y, pred_y)
+        ape += ape_
+        rmse += rmse_
         # base = datetime.datetime.today()
         '''
-        base = datetime.datetime.strptime("2019/01/18", "%Y/%M/%d")
+        base = datetime.datetime.strptime("2019/02/01", "%Y/%M/%d")
         t1 = [base + datetime.timedelta(days=x) for x in range(0,14)]
-        t2 = [base + datetime.timedelta(days=x) for x in range(-25, 14)]
+        t2 = [base + datetime.timedelta(days=x) for x in range(-39, 14)]
 
         newinfoID = infoID.replace('#','/')
         plt.figure(figsize=(8,3))
@@ -412,17 +432,17 @@ for choice in options:
         plt.plot(t2, np.concatenate([test_p,test_y]), linewidth = '3', label='GT')
         plt.plot(t1, pred_y, linewidth = '3', label='Pred')
         
-        this_err = abs(test_y - pred_y)
-        err += this_err
+        #this_err = abs(test_y - pred_y)
+        #err += this_err
         #print (infoID, this_err, sum(this_err))
         
         plt.legend(loc='upper left')
         path = './figures/results/'+platform+'/' + str(k) +'_'+str(n)
         if not os.path.exists(path):
             os.mkdir(path)
-        plt.savefig(path+'/'+infoID+'_event_dnn.png')
+        plt.savefig(path+'/'+asp+'_'+infoID+'_to_1_31_dnn.png')
         '''
-        sdate = 1549584000000 # 2-7
+        sdate = 1548979200000 # 2-1
         if asp == 'event':
             option = 'EventCount'
         elif asp == 'user':
@@ -442,8 +462,8 @@ for choice in options:
     #print ("total error:", err)
     #print ("err sum:", sum(err))
 
-with open('youtube_HYBRID_TEXT_.json', 'w') as outfile:
+with open('youtube_UIUC_HYBRID_TEXT_.json', 'w') as outfile:
     json.dump(outy, outfile)
-with open('twitter_HYBRID_TEXT_.json', 'w') as outfile:
+with open('twitter_UIUC_HYBRID_TEXT_.json', 'w') as outfile:
     json.dump(outt, outfile)
     

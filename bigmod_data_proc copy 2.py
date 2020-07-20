@@ -213,7 +213,7 @@ def postprocess(pred):
     return pred
     
 #nonlinear(gdelt)
-gdelt = decay(gdelt, 0.88)
+gdelt = decay(gdelt, 0.95)
 '''
 for option in ['EventCount', 'UserCount', 'NewUserCount']:
     X_train, X_test, X_pred, Y_train, Y_test, sample_weight = dataloader(7000,0, option)

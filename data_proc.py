@@ -25,7 +25,7 @@ def json_to_csv(platform):
 	InfoID 2018-12-24, 2018-12-25, ..., 
 	ID1        x           x
 	'''
-	with open('./data_json/'+platform+'_time_series_to_2_7.json', 'r') as f:
+	with open('./data_json/'+platform+'_time_series_to_2_14.json', 'r') as f:
 	    d = json.loads(f.read())
 
 	# print d.keys()
@@ -54,9 +54,9 @@ def json_to_csv(platform):
 	df_user = pd.DataFrame(arr_user, index=index, columns=column)
 	df_newuser = pd.DataFrame(arr_newuser, index=index, columns=column)
 
-	df_event.to_csv('./data_csv/'+platform+'_27_event.csv', index_label='InfoID')
-	df_user.to_csv('./data_csv/'+platform+'_27_user.csv', index_label='InfoID')
-	df_newuser.to_csv('./data_csv/'+platform+'_27_newuser.csv', index_label='InfoID')
+	df_event.to_csv('./data_csv/'+platform+'_131_event.csv', index_label='InfoID')
+	df_user.to_csv('./data_csv/'+platform+'_131_user.csv', index_label='InfoID')
+	df_newuser.to_csv('./data_csv/'+platform+'_131_newuser.csv', index_label='InfoID')
 
 def gdelt_to_csv():
 	# GDELT time series: form json to csv
@@ -92,7 +92,7 @@ def corr_to_csv():
 	# infoID1,    c11  ,    c12  , ...
 	# infoID2,    c21  ,    c22  , ...
 
-	with open('./data_json/corrmat_to_2_7.json', 'r') as f:
+	with open('./data_json/corrmat_to_1_31.json', 'r') as f:
 	    d = json.loads(f.read())
 
 	corr_twitter = np.array(d['twitterGdeltMat'])
@@ -108,8 +108,8 @@ def corr_to_csv():
 	df_twitter = pd.DataFrame(corr_twitter.T, index=infoID, columns=eventID)
 	df_youtube = pd.DataFrame(corr_youtube.T, index=infoID, columns=eventID)
 
-	df_twitter.to_csv('./data_csv/corr_27_twitter.csv')
-	df_youtube.to_csv('./data_csv/corr_27_youtube.csv')
+	df_twitter.to_csv('./data_csv/corr_131_twitter.csv')
+	df_youtube.to_csv('./data_csv/corr_131_youtube.csv')
 
 def generate_training_data(platform, section, K=10):
 	'''
@@ -118,14 +118,14 @@ def generate_training_data(platform, section, K=10):
 	'''
 	path = './' + platform+ '_' + section +'/'
 	# read narrative time series
-	df_event = pd.read_csv('./data_csv/'+platform+'_27_' + section + '.csv', header=0,index_col=0)
+	df_event = pd.read_csv('./data_csv/'+platform+'_131_' + section + '.csv', header=0,index_col=0)
 
 	# read GDELT time series
 	df_gdelt = pd.read_csv('./data_csv/gdelt.csv', header=0,dtype={'InfoID':str})
 	df_gdelt.set_index('InfoID', inplace=True)
 
 	# read correlation
-	df_corr = pd.read_csv('./data_csv/corr_27_'+platform+'.csv', header=0,index_col=0)
+	df_corr = pd.read_csv('./data_csv/corr_131_'+platform+'.csv', header=0,index_col=0)
 
 	infoIDs = sorted(df_event.index.values) # narrative
 	# eventIDs = df_corr.columns.values # GDELT
@@ -133,7 +133,7 @@ def generate_training_data(platform, section, K=10):
 	df_gdelt = df_gdelt.sort_index()
 
 	# Find the popular event ID we use as the input
-	active_event = df_gdelt[df_gdelt.sum(axis=1).gt(500)].index.values
+	active_event = df_gdelt[df_gdelt.sum(axis=1).gt(400)].index.values
 
 	# active_gdelt = list(active_gdelt)
 	df_gdelt = df_gdelt.loc[active_event,:]
@@ -164,8 +164,8 @@ def generate_training_data(platform, section, K=10):
 		for j in range(n):
 			W.append(w)
 		id = infoID.replace('/','#')
-		f_train = open(os.path.join(path, id+'_bert_1day_500_decay_dryrun_train.csv'), 'w')
-		for i in range(0,46):
+		f_train = open(os.path.join(path, id+'_bert_1day_500_decay_dryrun_normal_train.csv'), 'w')
+		for i in range(0,39):
 			I = arr_gdelt[:,i+k:i+k+n].T
 			x = I*np.array(W)
 			x = x.flatten()
@@ -177,17 +177,17 @@ def generate_training_data(platform, section, K=10):
 			f_train.write(','+str(y)+'\n')
 		f_train.close()
 
-		f_test = open(os.path.join(path, id+'_bert_1day_500_decay_dryrun_test.csv'), 'w')
-		for i in range(46,60):
+		f_test = open(os.path.join(path, id+'_bert_1day_500_decay_dryrun_normal_test.csv'), 'w')
+		for i in range(39,53):
 			I = arr_gdelt[:,i+k:i+k+n].T
 			x = I*np.array(W)
 			x = x.flatten()
-			#y = arr_event[i]
-			if i == 46:
+			y = arr_event[i]
+			if i == 39:
 				f_test.write(','.join("x"+str(cn) for cn in range(len(x))))
 				f_test.write(",y\n")
 			f_test.write(','.join(str(e) for e in x))
-			f_test.write(','+'0'+'\n')
+			f_test.write(','+str(y)+'\n') #'0'
 
 		ind += 1
 

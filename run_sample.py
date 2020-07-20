@@ -30,9 +30,11 @@ def main():
             # Train different depth model tree fits and plot results
             #from models.mean_regr import mean_regr
             #plot_model_tree_fit(mean_regr(), X, y, name, mapes, rmses, target)
-            from models.linear_regr import linear_regr
-            data = plot_model_tree_fit(linear_regr(), X, y, name, target, error)
-            sdate = 1549584000000
+            from models.lasso import lasso
+            #from models.linear_regr import linear_regr
+            #data = plot_model_tree_fit(linear_regr(), X, y, name, target, error)
+            data = plot_model_tree_fit(lasso(), X, y, name, target, error)
+            sdate = 1548979200000 # 2-1 #1549584000000
             if target == "twitter_event":
                 tt[key]["EventCount"] = {}
                 for i in range(len(data)):
@@ -87,7 +89,7 @@ def plot_model_tree_fit(model, X, y, name,  target, error):
 
         #mape_ls = np.zeros(12)
         # random forest
-        bag = 15
+        bag = 10
         placeholder = []
         for i in range(bag):
             X_real = copy.deepcopy(X)
@@ -116,9 +118,9 @@ def plot_model_tree_fit(model, X, y, name,  target, error):
             placeholder.append(y_pred)
         placeholder = np.array(placeholder)
         final_pred = placeholder.mean(axis = 0)
-        #rmse, ape = evaluation(y_test, final_pred)
-        #error[0] += rmse
-        #error[1] += ape
+        rmse, ape = evaluation(y_test, final_pred)
+        error[0] += rmse
+        error[1] += ape
         return final_pred
 
 
