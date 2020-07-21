@@ -5,13 +5,16 @@
 """
 from sklearn.metrics import mean_squared_error
 import warnings
+def warn(*args, **kwargs):
+    pass
 warnings.filterwarnings(action="ignore", module="scipy", message="^internal gelsd")
+warnings.warn = warn
 
 class lasso:
 
     def __init__(self):
         from sklearn.linear_model import Lasso
-        self.model = Lasso(alpha = 0.2, fit_intercept = False, max_iter = 1e6, normalize = True, tol = 1e-3)
+        self.model = Lasso(alpha = 0.1, fit_intercept = False, normalize = True, positive = True)
 
     def fit(self, X, y):
         self.model.fit(X, y)
