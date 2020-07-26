@@ -162,7 +162,8 @@ def plot_model_tree_fit(model, X, y, name,  target, error):
             y_pred = postprocess(y_pred)
             placeholder.append(y_pred)
         placeholder = np.array(placeholder)
-        avg_pred = placeholder.mean(axis = 0)
+        from scipy import stats
+        avg_pred = stats.hmean(placeholder, axis = 0)
         sum_ls = []
         for j in range(20):
             sum_this = sum(placeholder[j])
@@ -172,10 +173,10 @@ def plot_model_tree_fit(model, X, y, name,  target, error):
             sum_ls.append(sum_this)
         smallest = (np.array(sum_ls)).argsort()[:10]
         top10 = placeholder[smallest]
-        top10_pred = top10.mean(axis = 0)
+        top10_pred = stats.hmean(top10, axis = 0)
         smallest = (np.array(sum_ls)).argsort()[:5]
         top5 = placeholder[smallest]
-        top5_pred = top5.mean(axis = 0)
+        top5_pred = stats.hmean(top5, axis = 0)
         #rmse, ape = evaluation(y_test, final_pred)
         #error[0] += rmse
         #error[1] += ape

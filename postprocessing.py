@@ -12,7 +12,13 @@ nodelist = ["arrests","arrests/opposition","guaido/legitimate","international/ai
 #folder = "2-15 to 2-28/output/"
 fnames = ["twitter_UIUC_HYBRID_TEXT_avg.json","youtube_UIUC_HYBRID_TEXT_avg.json",
           "twitter_UIUC_HYBRID_TEXT_top5.json","youtube_UIUC_HYBRID_TEXT_top5.json",
-          "twitter_UIUC_HYBRID_TEXT_top10.json","youtube_UIUC_HYBRID_TEXT_top10.json"]
+          "twitter_UIUC_HYBRID_TEXT_top10.json","youtube_UIUC_HYBRID_TEXT_top10.json",
+          "twitter_UIUC_NN_TEXT_avg.json","youtube_UIUC_NN_TEXT_avg.json",
+          "twitter_UIUC_NN_TEXT_top5.json","youtube_UIUC_NN_TEXT_top5.json",
+          "twitter_UIUC_NN_TEXT_top10.json","youtube_UIUC_NN_TEXT_top10.json",
+          "twitter_UIUC_NN_GDELT_avg.json","youtube_UIUC_NN_GDELT_avg.json",
+          "twitter_UIUC_NN_GDELT_top5.json","youtube_UIUC_NN_GDELT_top5.json",
+          "twitter_UIUC_NN_GDELT_top10.json","youtube_UIUC_NN_GDELT_top10.json"]
           
 def dateGenerator(span):
     now = datetime.datetime(2018, 12, 24)
@@ -70,7 +76,7 @@ for file in fnames:
     # plot data to see the best result  #
     #                                   #
     #####################################
-    
+    '''
     
     #####################################
     #                                   #
@@ -96,9 +102,10 @@ for file in fnames:
             plt.figure()
             plt.title(name+", Event Sum: "+str(sum(output[item].EventCount.tolist()[:14])))
             plt.plot(ddraw[item].EventCount.tolist())
-            plt.plot(range(67, 81), output[item].EventCount.tolist())
+            plt.plot(range(74, 88), output[item].EventCount.tolist(), c = 'm')
             plt.xticks(np.arange(0, len(date[:split + pred_len + 5]), 3), date[:split + pred_len + 5:3], rotation='90')
             plt.grid(axis="y")
             plt.tight_layout()
             #plt.savefig("fig/7-21/SIR_ConditionedGDELT/%s.pdf" % name)
-            plt.savefig(file[:-5]+'_'+name+'_round3.png')
+            plt.savefig(file[:-5]+'_'+name+'_round4.png')
+    '''

@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import json
 import copy
+import math
 from sklearn.cluster import SpectralClustering
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
@@ -29,9 +30,18 @@ bk = {'arrests': 0.3019609954442556,
  'violence': 0.3498565845770635
 }
 #folder = "2-15 to 2-28/output/"
-fnames = ["twitter_UIUC_HYBRID_TEXT.json","youtube_UIUC_HYBRID_TEXT.json",
-          "twitter_UIUC_NN_TEXT.json","youtube_UIUC_NN_TEXT.json",
-          "twitter_UIUC_NN_GDELT.json","youtube_UIUC_NN_GDELT.json"]
+
+fnames = ["twitter_UIUC_HYBRID_TEXT_avg_newData.json","twitter_UIUC_NN_TEXT_avg_newData.json",
+          "twitter_UIUC_NN_GDELT_avg_newData.json",
+          "twitter_UIUC_NN_TEXT_top10_newData.json","twitter_UIUC_HYBRID_TEXT_top10_newData.json",
+          "twitter_UIUC_NN_GDELT_top10_newData.json",
+          "youtube_UIUC_HYBRID_TEXT_avg_newData.json","youtube_UIUC_NN_TEXT_avg_newData.json",
+          "youtube_UIUC_NN_GDELT_avg_newData.json",
+          "youtube_UIUC_NN_TEXT_top10_newData.json", "youtube_UIUC_HYBRID_TEXT_top10_newData.json",
+          "youtube_UIUC_NN_GDELT_top10_newData.json"]
+
+#fnames = ["twitter_UIUC_NN_GDELT_avg_newData.json", "twitter_UIUC_NN_GDELT_top10_newData.json",
+#          "youtube_UIUC_NN_GDELT_avg_newData.json", "youtube_UIUC_NN_GDELT_top10_newData.json"]
           
 def dateGenerator(span):
     now = datetime.datetime(2018, 12, 24)
@@ -50,9 +60,36 @@ def dateGenerator(span):
           
 for file in fnames:
     #####################################
-    # blackout                          #
-    #                                   #
-    #                                   #
+    # tarek blackout                    #
+    #####################################
+    if file == "twitter_UIUC_HYBRID_TEXT_top10_newData.json" or file == "youtube_UIUC_HYBRID_TEXT_top10_newData.json" or file == "twitter_UIUC_HYBRID_TEXT_avg_newData.json" or file == "youtube_UIUC_HYBRID_TEXT_avg_newData.json":
+        final = json.loads((open(file)).read())
+        fdict = {k: pd.read_json(v, orient='columns') for k, v in final.items()}
+        for key in fdict.keys():
+            ls0 = fdict[key].EventCount
+            ls1 = fdict[key].UserCount
+            ls2 = fdict[key].NewUserCount
+            D = 0
+            for i in range(14):
+                if i == 0:
+                    continue
+                if i >= 7:
+                    continue
+                if i == 1 or i ==3:
+                    D = 0
+                M = 0.5 + 0.5 * (1-math.exp(-D/2))
+                f_ratio = bk[key] + (1-bk[key]) * M
+                fdict[key].EventCount[i] = int(ls0[i] * f_ratio)
+                fdict[key].UserCount[i] = int(ls1[i] * f_ratio)
+                fdict[key].NewUserCount[i] = int(ls2[i] * f_ratio)
+                D += 1
+            fdict[key] = fdict[key].to_json()
+        with open(file[:-5]+"_blackout.json", "w") as outfile:
+            json.dump(fdict, outfile)
+        continue
+    
+    #####################################
+    # blatant blackout                  #
     #####################################
     with open(file) as f:
         final = json.loads(f.read())
@@ -64,17 +101,17 @@ for file in fnames:
             for i in range(14):
                 if i == 0:
                     continue
-                if i == 13:
+                if i >= 7:
                     continue
                 fdict[key].EventCount[i] = int(ls0[i] * bk[key])
                 fdict[key].UserCount[i] = int(ls1[i] * bk[key])
                 fdict[key].NewUserCount[i] = int(ls2[i] * bk[key])
             fdict[key] = fdict[key].to_json()
-        with open(file[:-5]+"_newData.json", "w") as outfile:
+        with open(file[:-5]+"_blackout.json", "w") as outfile:
             json.dump(fdict, outfile)
     
-    
-    
+
+for file in fnames:
     #####################################
     #                                   #
     # plot data to see the best result  #
@@ -82,26 +119,27 @@ for file in fnames:
     #####################################
     
     platform = file.split('_')[0]
-    with open('./data_json/'+platform+'_time_series_to_2_28.json', 'r') as f:
+    with open('./data_json/'+platform+'_time_series_to_3_07.json', 'r') as f:
         d = json.loads(f.read())
     ddraw = {k: pd.read_json(v, orient='columns') for k, v in d.items()}
     
     
-    date = dateGenerator(81)
-    with open(file[:-5]+"_newData.json") as f:
+    date = dateGenerator(88)
+    with open(file[:-5]+"_blackout.json") as f:
         output_file = json.loads(f.read())
         output = {k: pd.read_json(v, orient='columns') for k, v in output_file.items()}
         rmse, ape, size, size_gt = 0, 0, 0, 0
         for item in nodelist:
-            split = 67
+            split = 74
             pred_len = 14
             name = item.replace("/","_")
             plt.figure()
-            plt.title(name+", Event Sum: "+str(sum(output[item].NewUserCount.tolist()[:14])))
+            plt.title(name+", Event Sum: "+str(sum(output[item].EventCount.tolist()[:14])))
             plt.plot(ddraw[item].EventCount.tolist())
-            plt.plot(range(67, 81), output[item].EventCount.tolist())
+            plt.plot(range(74, 88), output[item].EventCount.tolist(), c = 'm')
             plt.xticks(np.arange(0, len(date[:split + pred_len + 5]), 3), date[:split + pred_len + 5:3], rotation='90')
             plt.grid(axis="y")
             plt.tight_layout()
             #plt.savefig("fig/7-21/SIR_ConditionedGDELT/%s.pdf" % name)
-            plt.savefig(file[:-5]+'_'+name+'_round3.png')
+            plt.savefig(file[:-5]+'_'+name+'_round4.png')
+
