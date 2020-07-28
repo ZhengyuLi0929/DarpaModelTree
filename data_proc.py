@@ -25,7 +25,7 @@ def json_to_csv(platform):
 	InfoID 2018-12-24, 2018-12-25, ..., 
 	ID1        x           x
 	'''
-	with open('./data_json/'+platform+'_time_series_to_3_07.json', 'r') as f:
+	with open('./data_json/'+platform+'_time_series_to_3_21.json', 'r') as f:
 	    d = json.loads(f.read())
 
 	# print d.keys()
@@ -54,9 +54,9 @@ def json_to_csv(platform):
 	df_user = pd.DataFrame(arr_user, index=index, columns=column)
 	df_newuser = pd.DataFrame(arr_newuser, index=index, columns=column)
 
-	df_event.to_csv('./data_csv/'+platform+'_307_event.csv', index_label='InfoID')
-	df_user.to_csv('./data_csv/'+platform+'_307_user.csv', index_label='InfoID')
-	df_newuser.to_csv('./data_csv/'+platform+'_307_newuser.csv', index_label='InfoID')
+	df_event.to_csv('./data_csv/'+platform+'_321_event.csv', index_label='InfoID')
+	df_user.to_csv('./data_csv/'+platform+'_321_user.csv', index_label='InfoID')
+	df_newuser.to_csv('./data_csv/'+platform+'_321_newuser.csv', index_label='InfoID')
 
 def gdelt_to_csv():
 	# GDELT time series: form json to csv
@@ -65,7 +65,7 @@ def gdelt_to_csv():
 	gdelt = {k: pd.read_json(v, typ='series') for k, v in d.items()}
 	
 	# GDELT decay
-	decay_factor = 0.98
+	decay_factor = 0.97
 	Y = copy.deepcopy(gdelt)
 	for event in gdelt:
 		date = gdelt[event].index
@@ -109,8 +109,8 @@ def corr_to_csv():
 	df_twitter = pd.DataFrame(corr_twitter.T, index=infoID, columns=eventID)
 	df_youtube = pd.DataFrame(corr_youtube.T, index=infoID, columns=eventID)
 
-	df_twitter.to_csv('./data_csv/corr_307_twitter.csv')
-	df_youtube.to_csv('./data_csv/corr_307_youtube.csv')
+	df_twitter.to_csv('./data_csv/corr_321_twitter.csv')
+	df_youtube.to_csv('./data_csv/corr_321_youtube.csv')
 
 def generate_training_data(platform, section, corr, K=10):
 	'''
@@ -119,14 +119,14 @@ def generate_training_data(platform, section, corr, K=10):
 	'''
 	path = './' + platform+ '_' + section +'/'
 	# read narrative time series
-	df_event = pd.read_csv('./data_csv/'+platform+'_307_' + section + '.csv', header=0,index_col=0)
+	df_event = pd.read_csv('./data_csv/'+platform+'_321_' + section + '.csv', header=0,index_col=0)
 
 	# read GDELT time series
 	df_gdelt = pd.read_csv('./data_csv/gdelt.csv', header=0,dtype={'InfoID':str})
 	df_gdelt.set_index('InfoID', inplace=True)
 
 	# read correlation
-	df_corr = pd.read_csv('./data_csv/corr_307_'+platform+'.csv', header=0,index_col=0)
+	df_corr = pd.read_csv('./data_csv/corr_321_'+platform+'.csv', header=0,index_col=0)
 
 	infoIDs = sorted(df_event.index.values) # narrative
 	# eventIDs = df_corr.columns.values # GDELT
@@ -161,7 +161,7 @@ def generate_training_data(platform, section, corr, K=10):
 			df_corr[df_corr.lt(0.01)] = 0
 		arr_event = df_event.loc[infoID,:].values
 		w = df_corr.loc[infoID,:].values
-		evt_ind = w.argsort()[-25:][::-1]
+		evt_ind = w.argsort()[-30:][::-1]
 		corr[platform][infoID] = {}
 		for index in evt_ind:
 			corr[platform][infoID][df_corr.columns[index]] = w[index]
@@ -169,8 +169,8 @@ def generate_training_data(platform, section, corr, K=10):
 		#for j in range(30):
 			#W.append(evt_ind[j])
 		id = infoID.replace('/','#')
-		f_train = open(os.path.join(path, id+'_original_307_train.csv'), 'w')
-		for i in range(0,74):
+		f_train = open(os.path.join(path, id+'_original_321_train.csv'), 'w')
+		for i in range(0,88):
 			I = arr_gdelt[:,i+k:i+k+n].T
 			x = I*np.array(w)
 			x = x.flatten()
@@ -183,14 +183,14 @@ def generate_training_data(platform, section, corr, K=10):
 			f_train.write(','+str(y)+'\n')
 		f_train.close()
 
-		f_test = open(os.path.join(path, id+'_original_307_test.csv'), 'w')
-		for i in range(74,88):
+		f_test = open(os.path.join(path, id+'_original_321_test.csv'), 'w')
+		for i in range(88,102):
 			I = arr_gdelt[:,i+k:i+k+n].T
 			x = I*np.array(w)
 			x = x.flatten()
 			x = x[evt_ind]
 			y = 0#arr_event[i]
-			if i == 74:
+			if i == 88:
 				f_test.write(','.join("x"+str(cn) for cn in range(len(x))))
 				f_test.write(",y\n")
 			f_test.write(','.join(str(e) for e in x))

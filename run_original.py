@@ -29,7 +29,7 @@ def main():
         yt5[key] = {}
         for target in targets:
             name = key.replace('/','#')
-            fname = name + "_original_307_train.csv"
+            fname = name + "_original_321_train.csv"
             data_csv_data_filename = os.path.join(target,fname)
             X, y, header = load_csv_data(data_csv_data_filename, mode="regr", verbose=False)
             # Train different depth model tree fits and plot results
@@ -39,7 +39,7 @@ def main():
             from models.linear_regr import linear_regr
             top10, top5, avg = plot_model_tree_fit(linear_regr(), X, y, name, target, error)
             #data = plot_model_tree_fit(lasso(), X, y, name, target, error)
-            sdate = 1552003200000 # 3-8 #1551398400000 #3-1 #1550188800000# 2-14 #1549584000000
+            sdate = 1553212800000# 3-22 1552608000000 #3-15 1552003200000 # 3-8 #1551398400000 #3-1 #1550188800000# 2-14 #1549584000000
             if target == "twitter_event":
                 tt10[key]["EventCount"] = {}
                 tt5[key]["EventCount"] = {}
@@ -155,7 +155,7 @@ def plot_model_tree_fit(model, X, y, name,  target, error):
             # Train model tree
             model_tree.fit(X_real, Y_real, verbose=False)
             
-            data_csv_data_filename = os.path.join(target, name+"_original_307_test.csv")
+            data_csv_data_filename = os.path.join(target, name+"_original_321_test.csv")
             X_test, y_test, header = load_csv_data(data_csv_data_filename, mode="regr", verbose=False)
             y_train_pred = model_tree.predict (X)
             y_pred = model_tree.predict(X_test)

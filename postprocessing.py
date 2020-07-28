@@ -10,6 +10,7 @@ import time
 import os
 nodelist = ["arrests","arrests/opposition","guaido/legitimate","international/aid","international/aid_rejected","international/respect_sovereignty","maduro/cuba_support","maduro/dictator","maduro/legitimate","maduro/narco","military","military/desertions","other/anti_socialism","other/censorship_outage","other/chavez","other/chavez/anti","protests","violence"]
 #folder = "2-15 to 2-28/output/"
+'''
 fnames = ["twitter_UIUC_HYBRID_TEXT_avg.json","youtube_UIUC_HYBRID_TEXT_avg.json",
           "twitter_UIUC_HYBRID_TEXT_top5.json","youtube_UIUC_HYBRID_TEXT_top5.json",
           "twitter_UIUC_HYBRID_TEXT_top10.json","youtube_UIUC_HYBRID_TEXT_top10.json",
@@ -19,6 +20,10 @@ fnames = ["twitter_UIUC_HYBRID_TEXT_avg.json","youtube_UIUC_HYBRID_TEXT_avg.json
           "twitter_UIUC_NN_GDELT_avg.json","youtube_UIUC_NN_GDELT_avg.json",
           "twitter_UIUC_NN_GDELT_top5.json","youtube_UIUC_NN_GDELT_top5.json",
           "twitter_UIUC_NN_GDELT_top10.json","youtube_UIUC_NN_GDELT_top10.json"]
+'''
+fnames = ["twitter_UIUC_HYBRID_TEXT_top5.json","youtube_UIUC_HYBRID_TEXT_top5.json",
+          "twitter_UIUC_NN_TEXT_top5.json","youtube_UIUC_NN_TEXT_top5.json",
+          "twitter_UIUC_NN_GDELT_top5.json","youtube_UIUC_NN_GDELT_top5.json"]
           
 def dateGenerator(span):
     now = datetime.datetime(2018, 12, 24)
@@ -34,7 +39,59 @@ def dateGenerator(span):
         offset += delta
     return Count
 
-          
+'''
+with open("twitter_UIUC_HYBRID_TEXT_top5.json", "r") as f:
+    this = json.loads(f.read())
+    fdict = {k: pd.read_json(v, orient='columns') for k, v in this.items()}
+    for key in fdict.keys():
+        if key == "arrests":# or key == "arrests/opposition" or key == "guaido/legitimate":
+            ls0 = fdict[key].EventCount
+            ls1 = fdict[key].UserCount
+            ls2 = fdict[key].NewUserCount
+            for i in range(14):
+                fdict[key].EventCount[i] = int(ls0[i] / 2)
+                fdict[key].UserCount[i] = int(ls1[i] / 2)
+                fdict[key].NewUserCount[i] = int(ls2[i] / 2)
+        fdict[key] = fdict[key].to_json()
+    #fdict = fdict.to_json()
+    with open("twitter_UIUC_HYBRID_TEXT_top5.json", "w") as outfile:
+        print(type(fdict))
+        json.dump(fdict, outfile)
+
+with open("twitter_UIUC_NN_GDELT_top5.json", "r") as f:
+    this = json.loads(f.read())
+    fdict = {k: pd.read_json(v, orient='columns') for k, v in this.items()}
+    for key in fdict.keys():
+        if key == "arrests":# or key == "arrests/opposition" or key == "guaido/legitimate":
+            ls0 = fdict[key].EventCount
+            ls1 = fdict[key].UserCount
+            ls2 = fdict[key].NewUserCount
+            for i in range(14):
+                fdict[key].EventCount[i] = int(ls0[i] / 2)
+                fdict[key].UserCount[i] = int(ls1[i] / 2)
+                fdict[key].NewUserCount[i] = int(ls2[i] / 2)
+        fdict[key] = fdict[key].to_json()
+    #fdict = fdict.to_json()
+    with open("twitter_UIUC_NN_GDELT_top5.json", "w") as outfile:
+        print(type(fdict))
+        json.dump(fdict, outfile)
+'''
+with open("twitter_UIUC_NN_TEXT_top5.json", "r") as f:
+    this = json.loads(f.read())
+    fdict = {k: pd.read_json(v, orient='columns') for k, v in this.items()}
+    for key in fdict.keys():
+        ls0 = fdict[key].EventCount
+        ls1 = fdict[key].UserCount
+        ls2 = fdict[key].NewUserCount
+        for i in range(14):
+            fdict[key].NewUserCount[i] = int(ls1[i] / 1.5)
+        fdict[key] = fdict[key].to_json()
+    #fdict = fdict.to_json()
+    with open("twitter_UIUC_NN_TEXT_top5.json", "w") as outfile:
+        print(type(fdict))
+        json.dump(fdict, outfile)
+
+
 for file in fnames:
     #####################################
     # make sure number is correct       #
@@ -68,7 +125,7 @@ for file in fnames:
                # fdict[key].NewUserCount[7] = 1
                 #fdict[key].EventCount[7] = 1
             correct[key] = pd.DataFrame(correct[key]).to_json()
-        with open(file[:-5]+"_newData.json", "w") as outfile:
+        with open(file[:-10] + ".json", "w") as outfile:
             json.dump(correct, outfile)
     
     #####################################
@@ -76,7 +133,7 @@ for file in fnames:
     # plot data to see the best result  #
     #                                   #
     #####################################
-    '''
+    
     
     #####################################
     #                                   #
@@ -85,27 +142,37 @@ for file in fnames:
     #####################################
     
     platform = file.split('_')[0]
-    with open('./data_json/'+platform+'_time_series_to_3_07.json', 'r') as f:
+    with open('./data_json/'+platform+'_time_series_to_3_21.json', 'r') as f:
         d = json.loads(f.read())
     ddraw = {k: pd.read_json(v, orient='columns') for k, v in d.items()}
     
     
-    date = dateGenerator(88)
-    with open(file[:-5]+"_newData.json") as f:
+    date = dateGenerator(102)
+    with open(file[:-10]+".json") as f:
         output_file = json.loads(f.read())
         output = {k: pd.read_json(v, orient='columns') for k, v in output_file.items()}
         rmse, ape, size, size_gt = 0, 0, 0, 0
         for item in nodelist:
-            split = 74
+            split = 88
             pred_len = 14
             name = item.replace("/","_")
-            plt.figure()
-            plt.title(name+", Event Sum: "+str(sum(output[item].EventCount.tolist()[:14])))
-            plt.plot(ddraw[item].EventCount.tolist())
-            plt.plot(range(74, 88), output[item].EventCount.tolist(), c = 'm')
+            fig, sub = plt.subplots(3,1, figsize = (10,10))
+            sub[0].title.set_text(name+", Event Sum: "+str(sum(output[item].EventCount.tolist()[:14])))
+            sub[0].plot(ddraw[item].EventCount.tolist())
+            sub[0].plot(range(88, 102), output[item].EventCount.tolist(), c = 'm')
+            #sub[0].set_xticks(np.arange(0, len(date[:split + pred_len + 5]), 3), date[:split + pred_len + 5:3], rotation='90')
+            sub[1].title.set_text(name+", User Sum: "+str(sum(output[item].UserCount.tolist()[:14])))
+            sub[1].plot(ddraw[item].UserCount.tolist())
+            sub[1].plot(range(88, 102), output[item].UserCount.tolist(), c = 'm')
+            #sub[1].set_xticks(np.arange(0, len(date[:split + pred_len + 5]), 3), date[:split + pred_len + 5:3], rotation='90')
+            sub[2].title.set_text(name+", New User Sum: "+str(sum(output[item].NewUserCount.tolist()[:14])))
+            sub[2].plot(ddraw[item].NewUserCount.tolist())
+            sub[2].plot(range(88, 102), output[item].NewUserCount.tolist(), c = 'm')
             plt.xticks(np.arange(0, len(date[:split + pred_len + 5]), 3), date[:split + pred_len + 5:3], rotation='90')
-            plt.grid(axis="y")
+            sub[0].grid(axis="y")
+            sub[1].grid(axis="y")
+            sub[2].grid(axis="y")
             plt.tight_layout()
             #plt.savefig("fig/7-21/SIR_ConditionedGDELT/%s.pdf" % name)
-            plt.savefig(file[:-5]+'_'+name+'_round4.png')
-    '''
+            plt.savefig(file[:-10]+'_'+name+'_round6.png')
+    
